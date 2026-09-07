@@ -9,6 +9,7 @@ use App\Models\Dictionaries\BodyType;
 use App\Models\Dictionaries\CarStatus;
 use App\Models\Dictionaries\Color;
 use App\Models\Dictionaries\EngineType;
+use App\Models\Dictionaries\InteriorType;
 use App\Models\Dictionaries\Showroom;
 use App\Models\Dictionaries\Transmission;
 use App\Models\Dictionaries\WheelType;
@@ -284,6 +285,7 @@ class CarController extends Controller
         'engineTypes' => EngineType::query()->ordered()->get(['id', 'name']),
         'wheelTypes' => WheelType::query()->ordered()->get(['id', 'name']),
         'colors' => Color::query()->ordered()->get(['id', 'name', 'hex']),
+        'interiorTypes' => InteriorType::query()->ordered()->get(['id', 'name']),
         'statuses' => CarStatus::query()->ordered()->get(['id', 'name', 'color']),
       ],
       'ptsTypes' => [
@@ -303,6 +305,8 @@ class CarController extends Controller
       'id' => $car->id,
       'showroom_id' => $car->showroom_id,
       'link' => $car->link,
+      'avito_url' => $car->avito_url ?: $car->link,
+      'autoteka_url' => $car->autoteka_url,
       'arrival_date' => $car->arrival_date?->format('Y-m-d'),
       'mark_id' => $car->mark_id,
       'model_id' => $car->model_id,
@@ -315,12 +319,15 @@ class CarController extends Controller
       'power' => $car->power,
       'salon' => $car->salon,
       'color' => $car->color,
+      'interior_type_id' => $car->interior_type_id,
       'engine_volume' => $car->engine_volume,
       'vin' => $car->vin,
       'body_number' => $car->body_number,
       'pts_type' => $car->pts_type,
       'price' => $car->price,
       'transport_cost' => $car->transport_cost,
+      'repair_cost' => $car->repair_cost,
+      'deregistration_cost' => $car->deregistration_cost,
       'sale_price' => $car->sale_price,
       'sell_out' => $car->sell_out,
       'supplier' => $car->supplier,
@@ -333,6 +340,8 @@ class CarController extends Controller
       'comment' => $car->comment,
       'direct' => $car->direct,
       'service_book' => $car->service_book,
+      'purchase_price_with_expenses' => $car->purchasePriceWithExpenses(),
+      'total_expenses' => $car->totalExpenses(),
       'selected' => [
         'mark' => $car->mark ? ['id' => $car->mark->id, 'label' => $car->mark->name] : null,
         'model' => $car->model ? ['id' => $car->model->id, 'label' => $car->model->name] : null,

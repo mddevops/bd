@@ -2,6 +2,7 @@ import { type ReactNode, useEffect, useMemo, useState } from 'react';
 
 import { CatalogSearchSelect } from '@/components/catalog/catalog-search-select';
 import { DatePickerField } from '@/components/date-picker-field';
+import { EngineVolumeSelect } from '@/components/engine-volume-select';
 import { FormSectionCard } from '@/components/form-section-card';
 import InputError from '@/components/input-error';
 import { StaticSearchCombobox } from '@/components/search-combobox';
@@ -411,15 +412,12 @@ export function UsedCarFormFields({
 
                     <div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
                         <div className="grid min-w-0 grid-cols-3 gap-2 content-start">
-                            <Field>
-                                <Label htmlFor="engine_volume">Объём двигателя</Label>
-                                <Input
-                                    id="engine_volume"
-                                    value={inputValue(data.engine_volume)}
-                                    onChange={(e) => setData('engine_volume', e.target.value)}
-                                />
-                                <InputError message={errors.engine_volume} />
-                            </Field>
+                            <EngineVolumeSelect
+                                value={String(inputValue(data.engine_volume))}
+                                onChange={(value) => setData('engine_volume', value)}
+                                error={errors.engine_volume}
+                                disabled={readOnly}
+                            />
                             <Field>
                                 <Label htmlFor="power">Мощность, л.с.</Label>
                                 <Input
@@ -565,7 +563,7 @@ export function UsedCarFormFields({
                 </div>
             </FormSectionCard>
 
-            <FormSectionCard title="Финансы">
+            <FormSectionCard title="Цены и продажа">
                 <div className="space-y-2">
                     <div className={row4}>
                         <Field>

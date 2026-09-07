@@ -44,6 +44,7 @@ export interface CarEditPayload {
     power: number | null;
     color: string | null;
     salon: string | null;
+    interior_type_id: number | null;
     vin: string | null;
     body_number: string | null;
     pts_type: number | null;
@@ -53,7 +54,11 @@ export interface CarEditPayload {
     sale_price: number | null;
     avito_price: number | null;
     transport_cost: number | null;
+    repair_cost: number | null;
+    deregistration_cost: number | null;
     supplier: string | null;
+    avito_url: string | null;
+    autoteka_url: string | null;
     link: string | null;
     is_sold: boolean;
     service_book: boolean | null;
@@ -95,6 +100,7 @@ function emptyFormData(): CarFormData {
         power: '',
         color: '',
         salon: '',
+        interior_type_id: null,
         vin: '',
         body_number: '',
         pts_type: null,
@@ -104,8 +110,11 @@ function emptyFormData(): CarFormData {
         sale_price: '',
         avito_price: '',
         transport_cost: '',
+        repair_cost: '',
+        deregistration_cost: '',
         supplier: '',
-        link: '',
+        avito_url: '',
+        autoteka_url: '',
         is_sold: false,
         service_book: false,
         comment: '',
@@ -128,6 +137,7 @@ function toFormData(car: CarEditPayload): CarFormData {
         power: asInputValue(car.power),
         color: car.color ?? '',
         salon: car.salon ?? '',
+        interior_type_id: car.interior_type_id,
         vin: car.vin ?? '',
         body_number: car.body_number ?? '',
         pts_type: car.pts_type === null || car.pts_type === undefined ? null : car.pts_type,
@@ -137,8 +147,11 @@ function toFormData(car: CarEditPayload): CarFormData {
         sale_price: asInputValue(car.sale_price),
         avito_price: asInputValue(car.avito_price),
         transport_cost: asInputValue(car.transport_cost),
+        repair_cost: asInputValue(car.repair_cost),
+        deregistration_cost: asInputValue(car.deregistration_cost),
         supplier: car.supplier ?? '',
-        link: car.link ?? '',
+        avito_url: car.avito_url ?? car.link ?? '',
+        autoteka_url: car.autoteka_url ?? '',
         is_sold: Boolean(car.is_sold),
         service_book: car.service_book ?? false,
         comment: car.comment ?? '',
@@ -148,7 +161,6 @@ function toFormData(car: CarEditPayload): CarFormData {
 function closeAndNormalizeUrl(onOpenChange: (open: boolean) => void) {
     onOpenChange(false);
 
-    // Если открыли по прямому URL (/create, /edit, /:id) — вернуть на список без смены history при обычном клике.
     if (typeof window !== 'undefined' && window.location.pathname !== '/cars') {
         window.history.replaceState(window.history.state, '', '/cars');
     }
@@ -227,7 +239,7 @@ function CarFormDialogBody({ formKey, mode, car, dictionaries, ptsTypes, onClose
         <form onSubmit={submit} className="space-y-4">
             <OverlayPortalContainer>
                 <ScrollArea className="-mx-4 h-[min(65vh,720px)] px-4">
-                    <div className="py-1 pr-3">
+                    <div className="p-1">
                         <CarFormFields
                             formKey={formKey}
                             data={normalizedData}

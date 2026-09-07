@@ -2,6 +2,7 @@ import { type ReactNode, useEffect, useMemo, useState } from 'react';
 
 import { CatalogSearchSelect } from '@/components/catalog/catalog-search-select';
 import { DatePickerField } from '@/components/date-picker-field';
+import { EngineVolumeSelect } from '@/components/engine-volume-select';
 import { FormSectionCard } from '@/components/form-section-card';
 import InputError from '@/components/input-error';
 import { StaticSearchCombobox } from '@/components/search-combobox';
@@ -27,6 +28,7 @@ export interface CarFormData {
     power: number | string;
     color: string;
     salon: string;
+    interior_type_id: number | null;
     vin: string;
     body_number: string;
     pts_type: number | null;
@@ -36,8 +38,11 @@ export interface CarFormData {
     sale_price: number | string;
     avito_price: number | string;
     transport_cost: number | string;
+    repair_cost: number | string;
+    deregistration_cost: number | string;
     supplier: string;
-    link: string;
+    avito_url: string;
+    autoteka_url: string;
     is_sold: boolean;
     service_book: boolean | null;
     comment: string;
@@ -67,6 +72,7 @@ export interface CarDictionaries {
     engineTypes: DictionaryItem[];
     wheelTypes: DictionaryItem[];
     colors: ColorDictionaryItem[];
+    interiorTypes: DictionaryItem[];
     statuses: DictionaryItem[];
 }
 
@@ -111,12 +117,19 @@ export function normalizeCarFormData(data: CarFormData): CarFormData {
         sale_price: inputValue(data.sale_price),
         avito_price: inputValue(data.avito_price),
         transport_cost: inputValue(data.transport_cost),
+        repair_cost: inputValue(data.repair_cost),
+        deregistration_cost: inputValue(data.deregistration_cost),
         supplier: inputValue(data.supplier) as string,
-        link: inputValue(data.link) as string,
+        avito_url: inputValue(data.avito_url) as string,
+        autoteka_url: inputValue(data.autoteka_url) as string,
         comment: inputValue(data.comment) as string,
         is_sold: Boolean(data.is_sold),
         service_book: data.service_book ?? false,
     };
+}
+
+function formatMoney(value: number): string {
+    return value.toLocaleString('ru-RU');
 }
 
 function parseOptionalInt(raw: string): number | '' {
@@ -199,6 +212,13 @@ export function CarFormFields({
         setModelLabel(selected?.model?.label ?? null);
     }, [formKey, selected?.mark?.label, selected?.model?.label]);
 
+    const totalExpenses =
+        (Number(data.repair_cost) || 0) +
+        (Number(data.transport_cost) || 0) +
+        (Number(data.deregistration_cost) || 0);
+
+    const purchaseWithExpenses = (Number(data.price) || 0) + totalExpenses;
+
     const ptsOptions = useMemo(
         () => [
             { value: '', label: 'Не выбрано' },
@@ -247,6 +267,18 @@ export function CarFormFields({
                         </Field>
 
                         <Field>
+                            <Label htmlFor="complectation">Комплектация</Label>
+                            <Input
+                                id="complectation"
+                                value={inputValue(data.complectation)}
+                                onChange={(e) => setData('complectation', e.target.value)}
+                            />
+                            <InputError message={errors.complectation} />
+                        </Field>
+                    </div>
+
+                    <div className={row4}>
+                        <Field>
                             <Label htmlFor="year">
                                 Год <span className="text-destructive">*</span>
                             </Label>
@@ -260,11 +292,9 @@ export function CarFormFields({
                             />
                             <InputError message={errors.year} />
                         </Field>
-                    </div>
 
-                    <div className={row4}>
                         <DictionarySelect
-                            label="Шоурум"
+                            label="Салон"
                             value={data.showroom_id}
                             items={dictionaries.showrooms}
                             onChange={(value) => setData('showroom_id', value)}
@@ -279,16 +309,6 @@ export function CarFormFields({
                                 onChange={(value) => setData('arrival_date', value)}
                             />
                             <InputError message={errors.arrival_date} />
-                        </Field>
-
-                        <Field>
-                            <Label htmlFor="complectation">Комплектация</Label>
-                            <Input
-                                id="complectation"
-                                value={inputValue(data.complectation)}
-                                onChange={(e) => setData('complectation', e.target.value)}
-                            />
-                            <InputError message={errors.complectation} />
                         </Field>
 
                         <DictionarySelect
@@ -306,11 +326,11 @@ export function CarFormFields({
                 <div className="space-y-2">
                     <div className={row4}>
                         <DictionarySelect
-                            label="Привод"
-                            value={data.wheel_type_id}
-                            items={dictionaries.wheelTypes}
-                            onChange={(value) => setData('wheel_type_id', value)}
-                            error={errors.wheel_type_id}
+                            label="Кузов"
+                            value={data.body_type_id}
+                            items={dictionaries.bodyTypes}
+                            onChange={(value) => setData('body_type_id', value)}
+                            error={errors.body_type_id}
                         />
                         <DictionarySelect
                             label="КПП"
@@ -319,99 +339,144 @@ export function CarFormFields({
                             onChange={(value) => setData('transmission_id', value)}
                             error={errors.transmission_id}
                         />
-                        <Field>
-                            <Label htmlFor="engine_volume">Объём двигателя</Label>
-                            <Input
-                                id="engine_volume"
-                                value={inputValue(data.engine_volume)}
-                                onChange={(e) => setData('engine_volume', e.target.value)}
-                            />
-                            <InputError message={errors.engine_volume} />
-                        </Field>
-                        <Field>
-                            <Label htmlFor="power">Мощность, л.с.</Label>
-                            <Input
-                                id="power"
-                                type="number"
-                                min={0}
-                                value={inputValue(data.power)}
-                                onChange={(e) => setData('power', parseOptionalInt(e.target.value))}
-                            />
-                            <InputError message={errors.power} />
-                        </Field>
-                    </div>
-
-                    <div className={row2}>
                         <DictionarySelect
-                            label="Двигатель"
+                            label="Привод"
+                            value={data.wheel_type_id}
+                            items={dictionaries.wheelTypes}
+                            onChange={(value) => setData('wheel_type_id', value)}
+                            error={errors.wheel_type_id}
+                        />
+                        <DictionarySelect
+                            label="Тип двигателя"
                             value={data.engine_type_id}
                             items={dictionaries.engineTypes}
                             onChange={(value) => setData('engine_type_id', value)}
                             error={errors.engine_type_id}
                         />
+                    </div>
 
-                        <Field>
-                            <ColorNameSelect
-                                value={inputValue(data.color) as string}
-                                options={dictionaries.colors.map((item) => ({
-                                    name: item.name,
-                                    hex: item.hex ?? null,
-                                }))}
-                                onChange={(value) => setData('color', value)}
-                                error={errors.color}
+                    <div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
+                        <div className="grid min-w-0 grid-cols-2 gap-2 content-start">
+                            <EngineVolumeSelect
+                                value={String(inputValue(data.engine_volume))}
+                                onChange={(value) => setData('engine_volume', value)}
+                                error={errors.engine_volume}
+                                disabled={readOnly}
                             />
-                        </Field>
+                            <Field>
+                                <Label htmlFor="power">Мощность, л.с.</Label>
+                                <Input
+                                    id="power"
+                                    type="number"
+                                    min={0}
+                                    value={inputValue(data.power)}
+                                    onChange={(e) => setData('power', parseOptionalInt(e.target.value))}
+                                />
+                                <InputError message={errors.power} />
+                            </Field>
+                        </div>
+
+                        <div className={cn(row2, 'content-start')}>
+                            <Field>
+                                <ColorNameSelect
+                                    value={inputValue(data.color) as string}
+                                    options={dictionaries.colors.map((item) => ({
+                                        name: item.name,
+                                        hex: item.hex ?? null,
+                                    }))}
+                                    onChange={(value) => setData('color', value)}
+                                    error={errors.color}
+                                />
+                            </Field>
+
+                            <DictionarySelect
+                                label="Салон (отделка)"
+                                value={data.interior_type_id}
+                                items={dictionaries.interiorTypes}
+                                onChange={(value) => setData('interior_type_id', value)}
+                                error={errors.interior_type_id}
+                            />
+                        </div>
                     </div>
                 </div>
             </FormSectionCard>
 
             <FormSectionCard title="Документы и учёт">
-                <div className={row4}>
-                    <Field>
-                        <Label htmlFor="vin">VIN</Label>
-                        <Input
-                            id="vin"
-                            value={inputValue(data.vin)}
-                            onChange={(e) => setData('vin', e.target.value)}
+                <div className="space-y-2">
+                    <div className={row3}>
+                        <Field>
+                            <Label htmlFor="vin">VIN</Label>
+                            <Input
+                                id="vin"
+                                value={inputValue(data.vin)}
+                                onChange={(e) => setData('vin', e.target.value)}
+                            />
+                            <InputError message={errors.vin} />
+                        </Field>
+                        <Field>
+                            <Label htmlFor="body_number">Номер кузова</Label>
+                            <Input
+                                id="body_number"
+                                value={inputValue(data.body_number)}
+                                onChange={(e) => setData('body_number', e.target.value)}
+                            />
+                            <InputError message={errors.body_number} />
+                        </Field>
+                        <Field>
+                            <Label htmlFor="supplier">Поставщик</Label>
+                            <Input
+                                id="supplier"
+                                value={inputValue(data.supplier)}
+                                onChange={(e) => setData('supplier', e.target.value)}
+                            />
+                            <InputError message={errors.supplier} />
+                        </Field>
+                    </div>
+
+                    <div className={row2}>
+                        <Field>
+                            <StaticSearchCombobox
+                                label="Тип ПТС"
+                                value={data.pts_type === null ? '' : String(data.pts_type)}
+                                options={ptsOptions}
+                                onChange={(value) => setData('pts_type', value === '' ? null : Number(value))}
+                                placeholder="Не выбрано"
+                            />
+                            <InputError message={errors.pts_type} />
+                        </Field>
+                        <Field>
+                            <Label htmlFor="key_number">Номер ключа</Label>
+                            <Input
+                                id="key_number"
+                                value={inputValue(data.key_number)}
+                                onChange={(e) => setData('key_number', e.target.value)}
+                            />
+                            <InputError message={errors.key_number} />
+                        </Field>
+                    </div>
+
+                    <div className={row3}>
+                        <SwitchActiveCard
+                            id="service_book"
+                            label="Сервисная книжка"
+                            checked={data.service_book === true}
+                            onCheckedChange={(checked) => setData('service_book', checked)}
                         />
-                        <InputError message={errors.vin} />
-                    </Field>
-                    <Field>
-                        <Label htmlFor="body_number">Номер кузова</Label>
-                        <Input
-                            id="body_number"
-                            value={inputValue(data.body_number)}
-                            onChange={(e) => setData('body_number', e.target.value)}
+                        <SwitchActiveCard
+                            id="is_sold"
+                            label="Продана"
+                            checked={data.is_sold}
+                            onCheckedChange={(checked) => setData('is_sold', checked)}
                         />
-                        <InputError message={errors.body_number} />
-                    </Field>
-                    <Field>
-                        <StaticSearchCombobox
-                            label="ПТС"
-                            value={data.pts_type === null ? '' : String(data.pts_type)}
-                            options={ptsOptions}
-                            onChange={(value) => setData('pts_type', value === '' ? null : Number(value))}
-                            placeholder="Не выбрано"
-                        />
-                        <InputError message={errors.pts_type} />
-                    </Field>
-                    <Field>
-                        <Label htmlFor="key_number">Номер ключа</Label>
-                        <Input
-                            id="key_number"
-                            value={inputValue(data.key_number)}
-                            onChange={(e) => setData('key_number', e.target.value)}
-                        />
-                        <InputError message={errors.key_number} />
-                    </Field>
+                    </div>
                 </div>
             </FormSectionCard>
 
             <FormSectionCard title="Цены и продажа">
                 <div className="space-y-2">
-                    <div className={row3}>
+                    <div className={row4}>
                         <Field>
-                            <Label htmlFor="price">Цена</Label>
+                            <Label htmlFor="price">Цена закупки</Label>
                             <Input
                                 id="price"
                                 type="number"
@@ -422,8 +487,17 @@ export function CarFormFields({
                             <InputError message={errors.price} />
                         </Field>
                         <Field>
+                            <Label htmlFor="purchase_with_expenses">Закупка с расходом</Label>
+                            <Input
+                                id="purchase_with_expenses"
+                                value={formatMoney(purchaseWithExpenses)}
+                                readOnly
+                                tabIndex={-1}
+                            />
+                        </Field>
+                        <Field>
                             <Label htmlFor="sale_price">
-                                Продажа <span className="text-destructive">*</span>
+                                Цена продажи <span className="text-destructive">*</span>
                             </Label>
                             <Input
                                 id="sale_price"
@@ -435,14 +509,83 @@ export function CarFormFields({
                             />
                             <InputError message={errors.sale_price} />
                         </Field>
-                        <Field className="content-end">
-                            <SwitchActiveCard
-                                id="is_sold"
-                                label="Продана"
-                                checked={data.is_sold}
-                                onCheckedChange={(checked) => setData('is_sold', checked)}
+                        <Field>
+                            <Label htmlFor="avito_price">Продажа Авито</Label>
+                            <Input
+                                id="avito_price"
+                                type="number"
+                                min={0}
+                                value={inputValue(data.avito_price)}
+                                onChange={(e) => setData('avito_price', parseOptionalInt(e.target.value))}
                             />
-                            <InputError message={errors.is_sold} />
+                            <InputError message={errors.avito_price} />
+                        </Field>
+                    </div>
+
+                    <div className={row4}>
+                        <Field>
+                            <Label htmlFor="repair_cost">Ремонт</Label>
+                            <Input
+                                id="repair_cost"
+                                type="number"
+                                min={0}
+                                value={inputValue(data.repair_cost)}
+                                onChange={(e) => setData('repair_cost', parseOptionalInt(e.target.value))}
+                            />
+                            <InputError message={errors.repair_cost} />
+                        </Field>
+                        <Field>
+                            <Label htmlFor="transport_cost">Автовоз</Label>
+                            <Input
+                                id="transport_cost"
+                                type="number"
+                                min={0}
+                                value={inputValue(data.transport_cost)}
+                                onChange={(e) => setData('transport_cost', parseOptionalInt(e.target.value))}
+                            />
+                            <InputError message={errors.transport_cost} />
+                        </Field>
+                        <Field>
+                            <Label htmlFor="deregistration_cost">Снятие с учёта</Label>
+                            <Input
+                                id="deregistration_cost"
+                                type="number"
+                                min={0}
+                                value={inputValue(data.deregistration_cost)}
+                                onChange={(e) => setData('deregistration_cost', parseOptionalInt(e.target.value))}
+                            />
+                            <InputError message={errors.deregistration_cost} />
+                        </Field>
+                        <Field>
+                            <Label htmlFor="total_expenses">Общий расход</Label>
+                            <Input id="total_expenses" value={formatMoney(totalExpenses)} readOnly tabIndex={-1} />
+                        </Field>
+                    </div>
+                </div>
+            </FormSectionCard>
+
+            <FormSectionCard title="Ссылки и комментарий">
+                <div className="space-y-2">
+                    <div className={row2}>
+                        <Field>
+                            <Label htmlFor="avito_url">Ссылка Авито</Label>
+                            <Input
+                                id="avito_url"
+                                type="url"
+                                value={inputValue(data.avito_url)}
+                                onChange={(e) => setData('avito_url', e.target.value)}
+                            />
+                            <InputError message={errors.avito_url} />
+                        </Field>
+                        <Field>
+                            <Label htmlFor="autoteka_url">Ссылка Автотека</Label>
+                            <Input
+                                id="autoteka_url"
+                                type="url"
+                                value={inputValue(data.autoteka_url)}
+                                onChange={(e) => setData('autoteka_url', e.target.value)}
+                            />
+                            <InputError message={errors.autoteka_url} />
                         </Field>
                     </div>
 
@@ -457,82 +600,6 @@ export function CarFormFields({
                         />
                         <InputError message={errors.comment} />
                     </Field>
-                </div>
-            </FormSectionCard>
-
-            <FormSectionCard title="Дополнительно">
-                <div className="space-y-2">
-                    <div className={row4}>
-                        <DictionarySelect
-                            label="Кузов"
-                            value={data.body_type_id}
-                            items={dictionaries.bodyTypes}
-                            onChange={(value) => setData('body_type_id', value)}
-                            error={errors.body_type_id}
-                        />
-                        <Field>
-                            <Label htmlFor="salon">Салон</Label>
-                            <Input
-                                id="salon"
-                                value={inputValue(data.salon)}
-                                onChange={(e) => setData('salon', e.target.value)}
-                            />
-                            <InputError message={errors.salon} />
-                        </Field>
-                        <Field>
-                            <Label htmlFor="supplier">Поставщик</Label>
-                            <Input
-                                id="supplier"
-                                value={inputValue(data.supplier)}
-                                onChange={(e) => setData('supplier', e.target.value)}
-                            />
-                            <InputError message={errors.supplier} />
-                        </Field>
-                        <Field>
-                            <Label htmlFor="transport_cost">Автовоз</Label>
-                            <Input
-                                id="transport_cost"
-                                type="number"
-                                min={0}
-                                value={inputValue(data.transport_cost)}
-                                onChange={(e) => setData('transport_cost', parseOptionalInt(e.target.value))}
-                            />
-                            <InputError message={errors.transport_cost} />
-                        </Field>
-                    </div>
-
-                    <div className={row3}>
-                        <Field>
-                            <Label htmlFor="avito_price">Цена Авито</Label>
-                            <Input
-                                id="avito_price"
-                                type="number"
-                                min={0}
-                                value={inputValue(data.avito_price)}
-                                onChange={(e) => setData('avito_price', parseOptionalInt(e.target.value))}
-                            />
-                            <InputError message={errors.avito_price} />
-                        </Field>
-                        <Field>
-                            <Label htmlFor="link">Ссылка</Label>
-                            <Input
-                                id="link"
-                                type="url"
-                                value={inputValue(data.link)}
-                                onChange={(e) => setData('link', e.target.value)}
-                            />
-                            <InputError message={errors.link} />
-                        </Field>
-                        <Field className="content-end">
-                            <SwitchActiveCard
-                                id="service_book"
-                                label="Сервисная книжка"
-                                checked={data.service_book === true}
-                                onCheckedChange={(checked) => setData('service_book', checked)}
-                            />
-                            <InputError message={errors.service_book} />
-                        </Field>
-                    </div>
                 </div>
             </FormSectionCard>
         </fieldset>

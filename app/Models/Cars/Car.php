@@ -7,6 +7,7 @@ use App\Models\Catalog\AutoModel;
 use App\Models\Dictionaries\BodyType;
 use App\Models\Dictionaries\CarStatus;
 use App\Models\Dictionaries\EngineType;
+use App\Models\Dictionaries\InteriorType;
 use App\Models\Dictionaries\Showroom;
 use App\Models\Dictionaries\Transmission;
 use App\Models\Dictionaries\WheelType;
@@ -22,6 +23,8 @@ class Car extends Model
   protected $fillable = [
     'showroom_id',
     'link',
+    'avito_url',
+    'autoteka_url',
     'arrival_date',
     'mark_id',
     'model_id',
@@ -34,12 +37,15 @@ class Car extends Model
     'power',
     'salon',
     'color',
+    'interior_type_id',
     'engine_volume',
     'vin',
     'body_number',
     'pts_type',
     'price',
     'transport_cost',
+    'repair_cost',
+    'deregistration_cost',
     'sale_price',
     'sell_out',
     'supplier',
@@ -66,6 +72,8 @@ class Car extends Model
       'pts_type' => 'integer',
       'price' => 'integer',
       'transport_cost' => 'integer',
+      'repair_cost' => 'integer',
+      'deregistration_cost' => 'integer',
       'sale_price' => 'integer',
       'avito_price' => 'integer',
       'transit' => 'integer',
@@ -108,6 +116,11 @@ class Car extends Model
     return $this->belongsTo(WheelType::class);
   }
 
+  public function interiorType(): BelongsTo
+  {
+    return $this->belongsTo(InteriorType::class);
+  }
+
   public function status(): BelongsTo
   {
     return $this->belongsTo(CarStatus::class, 'status_id');
@@ -116,5 +129,17 @@ class Car extends Model
   public function manager(): BelongsTo
   {
     return $this->belongsTo(User::class, 'manager_id');
+  }
+
+  public function totalExpenses(): int
+  {
+    return (int) $this->transport_cost
+      + (int) $this->repair_cost
+      + (int) $this->deregistration_cost;
+  }
+
+  public function purchasePriceWithExpenses(): int
+  {
+    return (int) $this->price + $this->totalExpenses();
   }
 }

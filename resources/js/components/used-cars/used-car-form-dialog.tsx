@@ -241,7 +241,7 @@ function UsedCarFormDialogBody({
         <form onSubmit={submit} className="space-y-4">
             <OverlayPortalContainer>
                 <ScrollArea className="-mx-4 h-[min(65vh,720px)] px-4">
-                    <div className="py-1 pr-3">
+                    <div className="p-1">
                         <UsedCarFormFields
                             formKey={formKey}
                             data={normalizedData}

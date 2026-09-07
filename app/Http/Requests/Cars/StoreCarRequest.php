@@ -19,6 +19,8 @@ class StoreCarRequest extends FormRequest
     return [
       'showroom_id' => ['nullable', 'integer', 'exists:showrooms,id'],
       'link' => ['nullable', 'string', 'max:255'],
+      'avito_url' => ['nullable', 'string', 'max:500'],
+      'autoteka_url' => ['nullable', 'string', 'max:350'],
       'arrival_date' => ['nullable', 'date'],
       'mark_id' => ['required', 'integer', 'exists:auto_marks,id'],
       'model_id' => ['required', 'integer', 'exists:auto_models,id'],
@@ -31,12 +33,15 @@ class StoreCarRequest extends FormRequest
       'power' => ['nullable', 'integer', 'min:0', 'max:2000'],
       'salon' => ['nullable', 'string', 'max:100'],
       'color' => ['nullable', 'string', 'max:100'],
+      'interior_type_id' => ['nullable', 'integer', 'exists:interior_types,id'],
       'engine_volume' => ['nullable', 'string', 'max:50'],
       'vin' => ['nullable', 'string', 'max:100'],
       'body_number' => ['nullable', 'string', 'max:100'],
       'pts_type' => ['nullable', 'integer', 'in:0,1,2'],
       'price' => ['nullable', 'integer', 'min:0'],
       'transport_cost' => ['nullable', 'integer', 'min:0'],
+      'repair_cost' => ['nullable', 'integer', 'min:0'],
+      'deregistration_cost' => ['nullable', 'integer', 'min:0'],
       'sale_price' => ['required', 'integer', 'min:0'],
       'sell_out' => ['sometimes', 'boolean'],
       'supplier' => ['nullable', 'string', 'max:150'],
@@ -59,10 +64,13 @@ class StoreCarRequest extends FormRequest
       'transmission_id',
       'engine_type_id',
       'wheel_type_id',
+      'interior_type_id',
       'power',
       'pts_type',
       'price',
       'transport_cost',
+      'repair_cost',
+      'deregistration_cost',
       'avito_price',
       'status_id',
       'transit',
@@ -75,7 +83,20 @@ class StoreCarRequest extends FormRequest
       'service_book' => $this->boolean('service_book'),
     ];
 
-    foreach (['color', 'link', 'complectation', 'salon', 'supplier', 'vin', 'body_number', 'key_number', 'engine_volume', 'comment'] as $field) {
+    foreach ([
+      'color',
+      'link',
+      'avito_url',
+      'autoteka_url',
+      'complectation',
+      'salon',
+      'supplier',
+      'vin',
+      'body_number',
+      'key_number',
+      'engine_volume',
+      'comment',
+    ] as $field) {
       if ($this->input($field) === '') {
         $payload[$field] = null;
       }
@@ -84,6 +105,14 @@ class StoreCarRequest extends FormRequest
     foreach ($nullableInts as $field) {
       if ($this->input($field) === '' || $this->input($field) === null) {
         $payload[$field] = null;
+      }
+    }
+
+    // Старое поле link синхронизируем с Авито, если явно не передали link.
+    if (array_key_exists('avito_url', $payload) || $this->has('avito_url')) {
+      $avito = $payload['avito_url'] ?? $this->input('avito_url');
+      if (! $this->has('link')) {
+        $payload['link'] = $avito;
       }
     }
 
