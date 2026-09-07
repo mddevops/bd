@@ -1,0 +1,54 @@
+---
+description: Весь проект на русском языке — без английских названий
+alwaysApply: true
+---
+
+# Русский язык во всём проекте
+
+CRM полностью на русском. Английские названия не используем нигде.
+
+## Интерфейс
+
+- Все подписи, кнопки, заголовки, подсказки, ошибки, уведомления — на русском.
+- `APP_LOCALE=ru`, `APP_FALLBACK_LOCALE=ru`.
+- Языковые файлы Laravel — в `lang/ru/`.
+
+## Код и доменная модель
+
+Имена сущностей, маршрутов, таблиц, колонок, enum, ролей и прав — по-русски через транслит (латиница):
+
+| Нельзя | Нужно |
+|--------|-------|
+| `Lead`, `Application` | `Zayavka` |
+| `Dealer` | `Diler` |
+| `Dealership`, `Salon` | `Salon` / `Avtosalon` |
+| `Operator` | `Operator` → `Operator` или `Sotrudnik` — уточнять по контексту; предпочтительно `Operator` как заимствование или `Sotrudnik` |
+| `Manager` | `Menedzher` |
+| `Car`, `Vehicle` | `Avtomobil` |
+| `Warehouse` | `Sklad` |
+| `Report` | `Otchet` |
+| `Call` | `Zvonok` |
+| `Region` | `Region` |
+
+Маршруты: `/zayavki`, `/dilery`, `/avtomobili`, `/sklad`, `/otchety` — не `/leads`, `/dealers`.
+
+Таблицы БД: `zayavki`, `dilery`, `avtomobili`, `sklady`, `zvonki`.
+
+## Комментарии и документация
+
+- Комментарии в коде — на русском.
+- README и внутренняя документация — на русском.
+
+## Исключения
+
+- Технические имена фреймворка и библиотек (Laravel, Inertia, shadcn, MySQL) — без изменений.
+- Стандартные методы и хуки фреймворка (`handle`, `render`, `useState`) — без изменений.
+- Переменные окружения (`.env`) — по конвенции Laravel на английском (`DB_HOST`).
+
+## Вёрстка shadcn/ui
+
+- Следовать правилам из `.cursor/rules/shadcn.mdc`
+- **Не менять** файлы в `resources/js/components/ui/` вручную
+- При переводе на русский — только текстовые строки
+- Новые компоненты — через `npx shadcn@latest add` или shadcn MCP
+- Таблицы — backend `laravel-inertia-datatables`, frontend `InertiaDataTable` + shadcn Table

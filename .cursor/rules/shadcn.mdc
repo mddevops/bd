@@ -1,0 +1,80 @@
+---
+description: Конвенции shadcn/ui для вёрстки в проекте
+globs: ["resources/js/**/*.tsx", "resources/js/**/*.ts"]
+alwaysApply: true
+---
+
+# Правила shadcn/ui
+
+Основано на [Cursor Rules for shadcn/ui](https://www.standarx.me/guides/shadcn-cursor-rules).
+
+## Импорты компонентов
+
+- Компоненты shadcn лежат в `resources/js/components/ui/`
+- Импорт: `import { Button } from '@/components/ui/button'`
+- **Никогда** не импортировать shadcn из `node_modules` — только локальные установленные компоненты
+- Перед созданием UI-компонента проверить, есть ли готовый в `@/components/ui/` или через shadcn MCP
+
+## Доступные компоненты (установленные)
+
+Button, Input, Label, Select, Checkbox, Card, Badge, Alert, AlertDialog, Dialog, DropdownMenu,
+Table, Pagination, Separator, Avatar, Skeleton, Sidebar, Sheet, Tooltip, Breadcrumb,
+NavigationMenu, Collapsible, Toggle, ToggleGroup, Combobox, Switch, Calendar, Tabs, Toast,
+InputGroup, Field, NumberField (`@/components/reui/number-field`).
+
+Новые — только через `npx shadcn@latest add <component>` или shadcn MCP.
+Перед добавлением — проверить, нет ли уже в `@/components/ui/` или готовой обёртки в `@/components/`.
+
+## Подтверждение опасных действий
+
+- **Только** `useConfirmAction` + `ConfirmActionDialog` (внутри — shadcn `AlertDialog`)
+- Эталон: `resources/js/components/catalog/catalog-row-actions.tsx`
+- **Запрещено:** браузерный `window.confirm` / `confirm()`
+
+## Формы в модалке
+
+- Создание/редактирование коротких сущностей — актуальный shadcn `Dialog` из `@/components/ui/dialog`
+- Overlay как у AlertDialog: лёгкий (`bg-black/10` + blur), не чёрный `bg-black/80`
+- После `shadcn add dialog` не откатывать к старому Radix Dialog вручную
+
+## Новые фичи — строго по шаблону проекта
+
+1. Смотреть эталоны: списки (`polzovateli/index`, catalog marks), формы (`FormShell` + `FormSectionCard`), удаления (`useConfirmAction`)
+2. Не изобретать свои модалки, таблицы, тосты, селекты — брать уже установленные компоненты
+3. UI-текст только на русском
+4. Доменные имена в коде — английские (`UsedCar`, `system-settings`), не транслит slug'ов для новых модулей
+
+## Объединение классов
+
+- **Всегда** использовать `cn()` из `@/lib/utils`
+- ✓ `className={cn('base-class', isActive && 'active-class', className)}`
+- ✗ `className={`base-class ${isActive ? 'active-class' : ''}`}`
+
+## Расширение компонентов
+
+- Варианты через `cva()` (class-variance-authority), не через ручные ветки className
+- Расширять shadcn **обёртками** в `resources/js/components/`, не править файлы в `ui/` без необходимости
+- Проп `className` пробрасывать наружу для кастомизации
+
+## Макеты страниц CRM
+
+### Списки с таблицей (эталон: `resources/js/pages/polzovateli/index.tsx`)
+
+- Обёртка: `AppPageContent` с `title` + `description` (или `CatalogLayout` + `HeadingSmall` для разделов каталога)
+- **Сразу после заголовка** — `InertiaDataTable`, без `Card`, без «Список …» / «Всего: N»
+- Серверная пагинация/поиск/сортировка/фильтры: `raprmdn/laravel-inertia-datatables` + `useInertiaDataTable` + `InertiaDataTable`
+- Кнопка в toolbar: `Button size="sm" className="h-8"`, иконка `Plus className="mr-1.5 size-3.5"`
+- Таблицы: TanStack Table **только для колонок**, shadcn `Table` внутри `InertiaDataTable`
+
+### Формы
+
+- `Card` с `CardHeader` (заголовок + описание) + `CardContent` + поля через `Label` + `Input`
+- Цвета: CSS-переменные Tailwind (`bg-background`, `text-foreground`, `text-muted-foreground`)
+- **Никогда** inline styles и хардкод цветов
+
+## Запрещено
+
+- Пересоздавать компонент, который уже есть в shadcn
+- Менять классы внутри `resources/js/components/ui/*` при переводе текстов
+- Кастомная пагинация вместо `@/components/ui/pagination`
+- Самописные таблицы без shadcn `Table`

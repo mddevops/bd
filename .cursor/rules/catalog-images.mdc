@@ -1,0 +1,55 @@
+---
+description: Загрузка и хранение изображений каталога (JPG, PNG, WebP)
+globs:
+  - app/Http/Controllers/Catalog/**/*.php
+  - app/Http/Requests/Catalog/**/*.php
+  - app/Support/CatalogImage.php
+  - resources/js/components/catalog/catalog-image-field.tsx
+  - resources/js/lib/catalog-image.ts
+alwaysApply: false
+---
+
+# Изображения каталога
+
+## Форматы и размер
+
+- **Допустимые форматы:** JPG, PNG, WebP
+- **Размер:** любой, лимит `max:` в валидации **не ставить**
+
+## Единый источник правил
+
+| Слой | Файл |
+|------|------|
+| PHP (валидация) | `App\Support\CatalogImage::uploadRules()` |
+| Frontend (accept, проверка типа) | `@/lib/catalog-image` — `CATALOG_IMAGE_ACCEPT`, `isCatalogImageFile()` |
+| Сохранение на диск | `StoresCatalogImages` trait |
+
+## Сохранение (backend)
+
+- Диск: `public` (`storage/app/public`)
+- Метод: `storeCatalogImage()` в `app/Http/Controllers/Catalog/Concerns/StoresCatalogImages.php`
+- В БД — **относительный путь**, например `mark_small/audi.webp`, `serie/75/xYz.jpg`
+- URL для фронта: `catalogImageUrl($path)`
+- Расширение берётся из загруженного файла, оригинальный размер **не меняем**
+
+## Валидация (FormRequest)
+
+```php
+use App\Support\CatalogImage;
+
+'logo_min' => CatalogImage::uploadRules(),
+'image'    => CatalogImage::uploadRules(),
+```
+
+## Frontend
+
+- Компонент поля: `CatalogImageField` (`resources/js/components/catalog/catalog-image-field.tsx`)
+- `accept={CATALOG_IMAGE_ACCEPT}`
+- Перед `onChange` проверять `isCatalogImageFile(file)`
+- Подпись в UI: «JPG, PNG или WebP»
+
+## Запрещено
+
+- Ограничивать размер (`max:2048` и т.п.) без явного запроса
+- Принимать GIF, SVG и другие форматы
+- Хардкодить MIME/accept в отдельных формах — только через `CatalogImage` / `catalog-image.ts`

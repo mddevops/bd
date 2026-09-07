@@ -1,0 +1,21 @@
+# English in code, Russian in UI
+
+## Code (always English)
+
+- File and folder names: `CatalogController`, `catalog/marks/index.tsx`
+- URLs and route names: `/catalog/marks/create`, `catalog.marks.store`
+- PHP classes, methods, variables, DB tables/columns: `AutoMark`, `auto_marks`, `store()`, `mark_id`
+- TypeScript types, props, hooks: English identifiers
+- Permission slugs: `catalog.view`, `catalog.manage`
+
+## UI (Russian only)
+
+- Button labels, headings, descriptions, table column titles shown to admin
+- Flash messages, validation messages for users
+- Breadcrumb **titles** (display text), not `href` paths
+- `APP_LOCALE=ru`, lang files in `lang/ru/`
+
+## Do not
+
+- Use translit in routes, controllers, or file paths (`katalog`, `Avtomarka`, `sozdanie`)
+- Use English in user-visible labels unless it's a proper name (BMW, URL slug field label may say "URL")
