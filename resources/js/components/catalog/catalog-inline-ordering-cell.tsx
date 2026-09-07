@@ -32,7 +32,7 @@ interface CatalogInlineOrderingCellProps {
 
 /**
  * Инлайн-редактирование порядка в таблице.
- * Сохранение: пауза 700 мс после ввода, либо blur / Enter.
+ * Сохранение: пауза 700 мс после ввода, либо blur / Enter.
  * Escape — отмена. Пустое значение = без порядка.
  */
 export function CatalogInlineOrderingCell({

@@ -21,7 +21,8 @@ return new class extends Migration
       });
     }
 
-    if (Schema::hasTable('used_cars')) {
+    // Старые БД: color_id. На свежей схеме уже string color — колонку не трогаем.
+    if (Schema::hasTable('used_cars') && Schema::hasColumn('used_cars', 'color_id')) {
       DB::table('used_cars')->update(['color_id' => null]);
     }
 
@@ -54,8 +55,11 @@ return new class extends Migration
       ]);
     }
 
-    DB::statement('ALTER TABLE colors MODIFY hex VARCHAR(7) NOT NULL');
-    DB::statement('ALTER TABLE colors AUTO_INCREMENT = 17');
+    // MySQL-only: на SQLite (тесты) hex уже NOT NULL из create-миграции.
+    if (Schema::getConnection()->getDriverName() === 'mysql') {
+      DB::statement('ALTER TABLE colors MODIFY hex VARCHAR(7) NOT NULL');
+      DB::statement('ALTER TABLE colors AUTO_INCREMENT = 17');
+    }
   }
 
   public function down(): void
