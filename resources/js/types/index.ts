@@ -5,6 +5,10 @@ import { type NastroikiPolzovatelya } from '@/hooks/use-nastroiki';
 export interface SystemSettingsShared {
     appName: string;
     logoUrl: string | null;
+    logoStyle: {
+        light: { background: string; size: number; color: string };
+        dark: { background: string; size: number; color: string };
+    };
     loginImageUrl: string;
     passwordResetEnabled: boolean;
     maintenanceMode: boolean;

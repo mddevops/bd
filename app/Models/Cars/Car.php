@@ -52,12 +52,10 @@ class Car extends Model
     'avito_price',
     'key_number',
     'status_id',
-    'is_sold',
     'transit',
     'manager_id',
     'comment',
     'direct',
-    'service_book',
   ];
 
   protected function casts(): array
@@ -65,8 +63,6 @@ class Car extends Model
     return [
       'arrival_date' => 'date',
       'sell_out' => 'boolean',
-      'is_sold' => 'boolean',
-      'service_book' => 'boolean',
       'year' => 'integer',
       'power' => 'integer',
       'pts_type' => 'integer',

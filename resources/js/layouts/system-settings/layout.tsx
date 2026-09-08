@@ -7,28 +7,28 @@ import { Link } from '@inertiajs/react';
 
 const sidebarNavItems: NavItem[] = [
     {
-        title: 'Профиль',
-        url: '/settings/profile',
+        title: 'Брендинг',
+        url: '/system-settings/branding',
         icon: null,
     },
     {
-        title: 'Пароль',
-        url: '/settings/password',
+        title: 'Доступ',
+        url: '/system-settings/access',
         icon: null,
     },
     {
-        title: 'Оформление',
-        url: '/settings/appearance',
+        title: 'Модули',
+        url: '/system-settings/modules',
         icon: null,
     },
 ];
 
-export default function SettingsLayout({ children }: { children: React.ReactNode }) {
+export default function SystemSettingsLayout({ children }: { children: React.ReactNode }) {
     const currentPath = window.location.pathname;
 
     return (
         <div className="px-4 py-6">
-            <Heading title="Настройки" description="Управление профилем и параметрами аккаунта" />
+            <Heading title="Настройки системы" description="Брендинг, доступ и модули CRM для всех пользователей" />
 
             <div className="flex flex-col space-y-8 lg:flex-row lg:space-y-0 lg:space-x-12">
                 <aside className="w-full max-w-xl lg:w-48">
@@ -43,9 +43,7 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
                                     'bg-muted': currentPath === item.url,
                                 })}
                             >
-                                <Link href={item.url}>
-                                    {item.title}
-                                </Link>
+                                <Link href={item.url}>{item.title}</Link>
                             </Button>
                         ))}
                     </nav>

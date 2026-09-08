@@ -49,12 +49,10 @@ return new class extends Migration
       $table->string('key_number', 100)->nullable();
 
       $table->foreignId('status_id')->nullable()->constrained('car_statuses')->nullOnDelete();
-      $table->boolean('is_sold')->nullable();
       $table->unsignedTinyInteger('transit')->default(0)->comment('1 — выезд, 2 — въезд');
       $table->foreignId('manager_id')->nullable()->constrained('users')->nullOnDelete();
       $table->text('comment')->nullable();
       $table->unsignedInteger('direct')->nullable();
-      $table->boolean('service_book')->nullable();
 
       $table->softDeletes();
       $table->timestamps();

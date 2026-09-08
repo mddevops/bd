@@ -39,11 +39,18 @@ class DashboardReportService
     $day30 = $now->copy()->subDays(30)->toDateString();
     $day60 = $now->copy()->subDays(60)->toDateString();
 
-    $inStock = fn (): Builder => Car::query()->where(function (Builder $query) {
-      $query->whereNull('is_sold')->orWhere('is_sold', false);
-    });
+    $soldStatusIds = CarStatus::query()->where('name', 'Продан')->pluck('id');
 
-    $sold = fn (): Builder => Car::query()->where('is_sold', true);
+    $inStock = function () use ($soldStatusIds): Builder {
+      return Car::query()->where(function (Builder $query) use ($soldStatusIds) {
+        $query->whereNull('status_id');
+        if ($soldStatusIds->isNotEmpty()) {
+          $query->orWhereNotIn('status_id', $soldStatusIds);
+        }
+      });
+    };
+
+    $sold = fn (): Builder => Car::query()->whereIn('status_id', $soldStatusIds);
 
     $stockValue = (int) $inStock()->sum('sale_price');
     $avgSalePrice = (int) round((float) ($inStock()->where('sale_price', '>', 0)->avg('sale_price') ?? 0));
@@ -84,7 +91,6 @@ class DashboardReportService
           'showroom' => $car->showroom?->name,
           'arrival_date' => $car->arrival_date?->format('d.m.Y'),
           'sale_price' => $car->sale_price,
-          'is_sold' => (bool) $car->is_sold,
           'status' => $car->status ? [
             'name' => $car->status->name,
             'color' => $car->status->color,

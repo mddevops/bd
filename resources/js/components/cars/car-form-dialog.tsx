@@ -60,8 +60,6 @@ export interface CarEditPayload {
     avito_url: string | null;
     autoteka_url: string | null;
     link: string | null;
-    is_sold: boolean;
-    service_book: boolean | null;
     comment: string | null;
     selected: {
         mark: { id: number; label: string } | null;
@@ -115,8 +113,6 @@ function emptyFormData(): CarFormData {
         supplier: '',
         avito_url: '',
         autoteka_url: '',
-        is_sold: false,
-        service_book: false,
         comment: '',
     });
 }
@@ -152,8 +148,6 @@ function toFormData(car: CarEditPayload): CarFormData {
         supplier: car.supplier ?? '',
         avito_url: car.avito_url ?? car.link ?? '',
         autoteka_url: car.autoteka_url ?? '',
-        is_sold: Boolean(car.is_sold),
-        service_book: car.service_book ?? false,
         comment: car.comment ?? '',
     });
 }

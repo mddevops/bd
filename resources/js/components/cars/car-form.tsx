@@ -6,7 +6,6 @@ import { EngineVolumeSelect } from '@/components/engine-volume-select';
 import { FormSectionCard } from '@/components/form-section-card';
 import InputError from '@/components/input-error';
 import { StaticSearchCombobox } from '@/components/search-combobox';
-import { SwitchActiveCard } from '@/components/shadcn-space/switch/switch-active-card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -43,8 +42,6 @@ export interface CarFormData {
     supplier: string;
     avito_url: string;
     autoteka_url: string;
-    is_sold: boolean;
-    service_book: boolean | null;
     comment: string;
 }
 
@@ -123,8 +120,6 @@ export function normalizeCarFormData(data: CarFormData): CarFormData {
         avito_url: inputValue(data.avito_url) as string,
         autoteka_url: inputValue(data.autoteka_url) as string,
         comment: inputValue(data.comment) as string,
-        is_sold: Boolean(data.is_sold),
-        service_book: data.service_book ?? false,
     };
 }
 
@@ -453,21 +448,6 @@ export function CarFormFields({
                             />
                             <InputError message={errors.key_number} />
                         </Field>
-                    </div>
-
-                    <div className={row3}>
-                        <SwitchActiveCard
-                            id="service_book"
-                            label="Сервисная книжка"
-                            checked={data.service_book === true}
-                            onCheckedChange={(checked) => setData('service_book', checked)}
-                        />
-                        <SwitchActiveCard
-                            id="is_sold"
-                            label="Продана"
-                            checked={data.is_sold}
-                            onCheckedChange={(checked) => setData('is_sold', checked)}
-                        />
                     </div>
                 </div>
             </FormSectionCard>

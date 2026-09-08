@@ -1,4 +1,4 @@
-import { ChangeEvent, DragEvent, useEffect, useId, useRef, useState } from 'react';
+import { ChangeEvent, DragEvent, type ReactNode, useEffect, useId, useRef, useState } from 'react';
 import { Image, Upload } from 'lucide-react';
 
 import { CATALOG_IMAGE_ACCEPT, isCatalogImageFile } from '@/lib/catalog-image';
@@ -9,14 +9,29 @@ import { cn } from '@/lib/utils';
 
 interface Props {
     label?: string;
+    labelAction?: ReactNode;
     value: File | null;
     currentUrl?: string | null;
     error?: string;
     onChange: (file: File | null) => void;
     className?: string;
+    accept?: string;
+    formatsHint?: string;
+    isValidFile?: (file: File) => boolean;
 }
 
-export function CatalogImageField({ label, value, currentUrl, error, onChange, className }: Props) {
+export function CatalogImageField({
+    label,
+    labelAction,
+    value,
+    currentUrl,
+    error,
+    onChange,
+    className,
+    accept = CATALOG_IMAGE_ACCEPT,
+    formatsHint = 'JPG, PNG или WebP',
+    isValidFile = isCatalogImageFile,
+}: Props) {
     const inputId = useId();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [preview, setPreview] = useState<string | null>(null);
@@ -35,7 +50,7 @@ export function CatalogImageField({ label, value, currentUrl, error, onChange, c
     }, [value]);
 
     const applyFile = (file: File | null) => {
-        if (file && !isCatalogImageFile(file)) {
+        if (file && !isValidFile(file)) {
             return;
         }
 
@@ -56,7 +71,12 @@ export function CatalogImageField({ label, value, currentUrl, error, onChange, c
 
     return (
         <div className={cn('flex flex-col gap-2', className)}>
-            {label ? <Label htmlFor={inputId}>{label}</Label> : null}
+            {label || labelAction ? (
+                <div className="flex items-center justify-between gap-2">
+                    {label ? <Label htmlFor={inputId}>{label}</Label> : <span />}
+                    {labelAction}
+                </div>
+            ) : null}
 
             <div
                 className={cn(
@@ -80,7 +100,7 @@ export function CatalogImageField({ label, value, currentUrl, error, onChange, c
                     ref={fileInputRef}
                     id={inputId}
                     type="file"
-                    accept={CATALOG_IMAGE_ACCEPT}
+                    accept={accept}
                     className="sr-only"
                     aria-label={label ?? 'Загрузить изображение'}
                     onChange={handleChange}
@@ -96,7 +116,7 @@ export function CatalogImageField({ label, value, currentUrl, error, onChange, c
                             <Image className="size-4 opacity-60" aria-hidden="true" />
                         </div>
                         <p className="mb-1.5 text-sm font-medium">Перетащите изображение сюда</p>
-                        <p className="text-muted-foreground text-xs">JPG, PNG или WebP</p>
+                        <p className="text-muted-foreground text-xs">{formatsHint}</p>
                     </div>
                 )}
 

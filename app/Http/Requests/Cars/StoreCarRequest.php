@@ -48,11 +48,9 @@ class StoreCarRequest extends FormRequest
       'avito_price' => ['nullable', 'integer', 'min:0'],
       'key_number' => ['nullable', 'string', 'max:100'],
       'status_id' => ['nullable', 'integer', 'exists:car_statuses,id'],
-      'is_sold' => ['sometimes', 'boolean'],
       'transit' => ['nullable', 'integer', 'in:0,1,2'],
       'comment' => ['nullable', 'string', 'max:5000'],
       'direct' => ['nullable', 'integer', 'min:0'],
-      'service_book' => ['sometimes', 'boolean'],
     ];
   }
 
@@ -78,9 +76,7 @@ class StoreCarRequest extends FormRequest
     ];
 
     $payload = [
-      'is_sold' => $this->boolean('is_sold'),
       'sell_out' => $this->boolean('sell_out'),
-      'service_book' => $this->boolean('service_book'),
     ];
 
     foreach ([

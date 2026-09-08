@@ -144,7 +144,6 @@ class CarController extends Controller
         Column::make('body_type_id')->filterable(),
         Column::make('engine_type_id')->filterable(),
         Column::make('pts_type')->filterable(),
-        Column::make('is_sold')->filterable(),
       ])
       ->applyFilters($filters['expressions'])
       ->applySort($request->string('col')->toString() ?: null)
@@ -180,8 +179,6 @@ class CarController extends Controller
           'pts_type' => $car->pts_type,
           'pts_label' => $ptsLabels[$car->pts_type] ?? null,
           'key_number' => $car->key_number,
-          'is_sold' => (bool) $car->is_sold,
-          'service_book' => $car->service_book,
           'link' => $car->link,
           'status' => $car->status ? [
             'name' => $car->status->name,
@@ -245,12 +242,6 @@ class CarController extends Controller
       }
 
       $expressions[] = "{$key}:{$value}";
-    }
-
-    $isSold = $request->string('is_sold')->toString();
-    $state['is_sold'] = in_array($isSold, ['0', '1'], true) ? $isSold : null;
-    if ($state['is_sold'] !== null) {
-      $expressions[] = "is_sold:{$state['is_sold']}";
     }
 
     $arrivalFrom = $request->string('arrival_date_from')->toString();
@@ -334,12 +325,10 @@ class CarController extends Controller
       'avito_price' => $car->avito_price,
       'key_number' => $car->key_number,
       'status_id' => $car->status_id,
-      'is_sold' => $car->is_sold,
       'transit' => $car->transit,
       'manager_id' => $car->manager_id,
       'comment' => $car->comment,
       'direct' => $car->direct,
-      'service_book' => $car->service_book,
       'purchase_price_with_expenses' => $car->purchasePriceWithExpenses(),
       'total_expenses' => $car->totalExpenses(),
       'selected' => [

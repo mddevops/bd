@@ -30,7 +30,6 @@ interface RecentItem {
     arrival_date: string | null;
     sale_price: number | null;
     mileage?: number | null;
-    is_sold?: boolean;
     status: { name: string; color: string | null; text_color: string | null } | null;
 }
 
@@ -303,10 +302,6 @@ function RecentTable({
                                                 }}
                                             >
                                                 {item.status.name}
-                                            </Badge>
-                                        ) : item.is_sold ? (
-                                            <Badge variant="secondary" className="text-[10px]">
-                                                Продана
                                             </Badge>
                                         ) : (
                                             <span className="text-muted-foreground">—</span>

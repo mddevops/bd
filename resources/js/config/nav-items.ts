@@ -67,7 +67,7 @@ export const navGroups: NavGroup[] = [
             },
             {
                 title: 'Настройки системы',
-                url: '/system-settings',
+                url: '/system-settings/branding',
                 icon: Settings,
                 pravo: 'system_settings.view',
             },

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\SystemSetting;
+use App\Support\LogoStyle;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 
@@ -53,6 +54,7 @@ class SystemSettingsService
    * @return array{
    *   appName: string,
    *   logoUrl: string|null,
+   *   logoStyle: array{light: array{background: string, size: int, color: string}, dark: array{background: string, size: int, color: string}},
    *   loginImageUrl: string,
    *   passwordResetEnabled: bool,
    *   maintenanceMode: bool,
@@ -74,6 +76,7 @@ class SystemSettingsService
     return [
       'appName' => $settings->app_name ?: (string) config('app.name'),
       'logoUrl' => self::publicUrl($settings->logo_path),
+      'logoStyle' => LogoStyle::normalize($settings->logo_style),
       'loginImageUrl' => self::publicUrl($settings->login_image_path) ?? '/placeholder.svg',
       'passwordResetEnabled' => $settings->password_reset_enabled,
       'maintenanceMode' => $settings->maintenance_mode,

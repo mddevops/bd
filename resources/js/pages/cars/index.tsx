@@ -10,7 +10,6 @@ import {
 } from '@/components/cars/car-form-dialog';
 import { type CarDictionaries } from '@/components/cars/car-form';
 import {
-    CellBool,
     CellExternalLink,
     CellMoney,
     CellText,
@@ -55,8 +54,6 @@ interface CarRow {
     pts_label: string | null;
     key_number: string | null;
     status: CarStatus | null;
-    is_sold: boolean;
-    service_book: boolean | null;
     link: string | null;
 }
 
@@ -72,7 +69,6 @@ interface CarsFilters {
     year_to: number | null;
     arrival_date_from: string | null;
     arrival_date_to: string | null;
-    is_sold: string | null;
 }
 
 interface SelectedOption {
@@ -116,7 +112,6 @@ const filterKeys = [
     'year_to',
     'arrival_date_from',
     'arrival_date_to',
-    'is_sold',
 ];
 
 function asFilterString(value: number | string | null | undefined): string | null {
@@ -290,16 +285,6 @@ export default function CarsIndex({
                 fromValue: filters.arrival_date_from,
                 toValue: filters.arrival_date_to,
             },
-            {
-                type: 'select',
-                key: 'is_sold',
-                label: 'Продана',
-                value: filters.is_sold,
-                options: [
-                    { value: '1', label: 'Да' },
-                    { value: '0', label: 'Нет' },
-                ],
-            },
         ],
         [dictionaries, filters, ptsTypes, selectedMark?.label, selectedModel?.label],
     );
@@ -423,18 +408,6 @@ export default function CarsIndex({
                 meta: { label: 'Статус' },
                 header: 'Статус',
                 cell: ({ row }) => <CellText value={row.original.status?.name} className="font-medium" />,
-            },
-            {
-                accessorKey: 'is_sold',
-                meta: { label: 'Продана' },
-                header: 'Продана',
-                cell: ({ row }) => <CellBool value={row.original.is_sold} />,
-            },
-            {
-                accessorKey: 'service_book',
-                meta: { label: 'Сервисная книжка' },
-                header: 'Серв. кн.',
-                cell: ({ row }) => <CellBool value={row.original.service_book} />,
             },
             {
                 id: 'link',

@@ -11,6 +11,7 @@ class SystemSetting extends Model
   protected $fillable = [
     'app_name',
     'logo_path',
+    'logo_style',
     'login_image_path',
     'password_reset_enabled',
     'maintenance_mode',
@@ -26,6 +27,7 @@ class SystemSetting extends Model
   protected function casts(): array
   {
     return [
+      'logo_style' => 'array',
       'password_reset_enabled' => 'boolean',
       'maintenance_mode' => 'boolean',
       'module_catalog_enabled' => 'boolean',
