@@ -48,7 +48,7 @@ class StoreCarRequest extends FormRequest
       'avito_price' => ['nullable', 'integer', 'min:0'],
       'key_number' => ['nullable', 'string', 'max:100'],
       'status_id' => ['nullable', 'integer', 'exists:car_statuses,id'],
-      'transit' => ['nullable', 'integer', 'in:0,1,2'],
+      'transit' => ['sometimes', 'integer', 'in:0,1,2'],
       'comment' => ['nullable', 'string', 'max:5000'],
       'direct' => ['nullable', 'integer', 'min:0'],
     ];
@@ -71,12 +71,13 @@ class StoreCarRequest extends FormRequest
       'deregistration_cost',
       'avito_price',
       'status_id',
-      'transit',
       'direct',
     ];
 
     $payload = [
       'sell_out' => $this->boolean('sell_out'),
+      // В БД transit NOT NULL с default 0 — пустое значение нельзя писать как null.
+      'transit' => $this->filled('transit') ? (int) $this->input('transit') : 0,
     ];
 
     foreach ([
