@@ -62,6 +62,10 @@ const eventStatusStyles: Record<string, { wrap: string; dot: string }> = {
         wrap: 'bg-red-500/10 text-foreground',
         dot: 'bg-red-500',
     },
+    restored: {
+        wrap: 'bg-teal-500/10 text-foreground',
+        dot: 'bg-teal-500',
+    },
     created: {
         wrap: 'bg-sky-500/10 text-foreground',
         dot: 'bg-sky-500',

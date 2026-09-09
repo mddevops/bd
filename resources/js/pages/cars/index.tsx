@@ -18,6 +18,7 @@ import {
 import { InertiaDataTable } from '@/components/inertia-data-table/inertia-data-table';
 import { type DataTableFilterField } from '@/components/inertia-data-table/types';
 import { Button } from '@/components/ui/button';
+import { VehicleBulkTrashActions } from '@/components/vehicle-bulk-trash-actions';
 import { useDostup } from '@/hooks/use-dostup';
 import { useInertiaDataTable } from '@/hooks/use-inertia-data-table';
 import AppLayout from '@/layouts/app-layout';
@@ -69,6 +70,7 @@ interface CarsFilters {
     year_to: number | null;
     arrival_date_from: string | null;
     arrival_date_to: string | null;
+    trashed: string | null;
 }
 
 interface SelectedOption {
@@ -112,6 +114,7 @@ const filterKeys = [
     'year_to',
     'arrival_date_from',
     'arrival_date_to',
+    'trashed',
 ];
 
 function asFilterString(value: number | string | null | undefined): string | null {
@@ -133,7 +136,9 @@ export default function CarsIndex({
     formMode,
     editingCar,
 }: Props) {
-    const { estPravo } = useDostup();
+    const { estPravo, estRol } = useDostup();
+    const canManageTrash = estRol('administrator') || estPravo('cars.delete');
+    const trashedOnly = filters.trashed === 'only';
     const { setSearch, setLimit, setFilter, applyFilters, resetFilters } = useInertiaDataTable(state, filterKeys);
 
     const [dialogOpen, setDialogOpen] = useState(
@@ -193,6 +198,18 @@ export default function CarsIndex({
 
     const filterFields = useMemo<DataTableFilterField[]>(
         () => [
+            ...(canManageTrash
+                ? [
+                      {
+                          type: 'select' as const,
+                          key: 'trashed',
+                          label: 'Записи',
+                          value: filters.trashed,
+                          emptyLabel: 'Активные',
+                          options: [{ value: 'only', label: 'Удалённые' }],
+                      },
+                  ]
+                : []),
             {
                 type: 'catalog',
                 key: 'mark_id',
@@ -286,7 +303,7 @@ export default function CarsIndex({
                 toValue: filters.arrival_date_to,
             },
         ],
-        [dictionaries, filters, ptsTypes, selectedMark?.label, selectedModel?.label],
+        [dictionaries, filters, canManageTrash, ptsTypes, selectedMark?.label, selectedModel?.label],
     );
 
     const columns = useMemo<ColumnDef<CarRow>[]>(
@@ -448,11 +465,29 @@ export default function CarsIndex({
                     onResetFilters={resetFilters}
                     cellBorders
                     getRowStyle={getRowStyle}
+                    selectable={canManageTrash}
+                    bulkActions={
+                        canManageTrash
+                            ? ({ selectedIds, clearSelection }) => (
+                                  <VehicleBulkTrashActions
+                                      selectedIds={selectedIds}
+                                      clearSelection={clearSelection}
+                                      trashedOnly={trashedOnly}
+                                      destroyRoute={route('cars.bulk.destroy')}
+                                      restoreRoute={route('cars.bulk.restore')}
+                                      forceDestroyRoute={route('cars.bulk.force-destroy')}
+                                      only={['cars', 'state', 'filters', 'flash']}
+                                  />
+                              )
+                            : undefined
+                    }
                     onRowClick={
-                        estPravo('cars.view') || estPravo('cars.update') ? (row) => openCar(row.id) : undefined
+                        estPravo('cars.view') || estPravo('cars.update') || (canManageTrash && trashedOnly)
+                            ? (row) => openCar(row.id)
+                            : undefined
                     }
                     toolbar={
-                        estPravo('cars.create') ? (
+                        estPravo('cars.create') && !trashedOnly ? (
                             <Button size="sm" className="h-8" type="button" onClick={openCreate}>
                                 <Plus className="mr-1.5 size-3.5" />
                                 Добавить

@@ -21,8 +21,22 @@ use Spatie\Activitylog\Traits\LogsActivity;
 
 class UsedCar extends Model
 {
-  use LogsActivity;
+  use LogsActivity {
+    shouldLogEvent as protected activitylogShouldLogEvent;
+  }
   use SoftDeletes;
+
+  /** @var list<string> */
+  protected static array $recordEvents = ['created', 'updated'];
+
+  protected function shouldLogEvent(string $eventName): bool
+  {
+    if (! app(\App\Services\ActivityHistoryService::class)->allows($eventName)) {
+      return false;
+    }
+
+    return $this->activitylogShouldLogEvent($eventName);
+  }
 
   protected $fillable = [
     'showroom_id',
@@ -148,7 +162,12 @@ class UsedCar extends Model
       ->logFillable()
       ->logExcept(['pictures'])
       ->logOnlyDirty()
-      ->dontSubmitEmptyLogs();
+      ->dontSubmitEmptyLogs()
+      ->setDescriptionForEvent(fn (string $eventName) => match ($eventName) {
+        'created' => 'Создание автомобиля',
+        'updated' => 'Изменение автомобиля',
+        default => $eventName,
+      });
   }
 
   public function servicesTotalCost(): int

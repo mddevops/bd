@@ -22,7 +22,7 @@ class UpdateSystemSettingsRequest extends FormRequest
     $hexOrEmpty = ['nullable', 'string', 'max:32', 'regex:/^$|^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/'];
 
     $rules = [
-      'section' => ['required', Rule::in(['branding', 'access', 'modules'])],
+      'section' => ['required', Rule::in(['branding', 'access', 'modules', 'system'])],
     ];
 
     if ($section === 'branding') {
@@ -50,6 +50,16 @@ class UpdateSystemSettingsRequest extends FormRequest
         ...$rules,
         'password_reset_enabled' => ['required', 'boolean'],
         'maintenance_mode' => ['required', 'boolean'],
+      ];
+    }
+
+    if ($section === 'system') {
+      return [
+        ...$rules,
+        'activity_log_view_enabled' => ['required', 'boolean'],
+        'activity_log_update_enabled' => ['required', 'boolean'],
+        'activity_log_delete_enabled' => ['required', 'boolean'],
+        'activity_log_restore_enabled' => ['required', 'boolean'],
       ];
     }
 
@@ -105,6 +115,19 @@ class UpdateSystemSettingsRequest extends FormRequest
         'module_used_cars_enabled',
         'module_cars_enabled',
         'module_dictionaries_enabled',
+      ] as $field) {
+        if ($this->has($field)) {
+          $payload[$field] = $this->boolean($field);
+        }
+      }
+    }
+
+    if ($section === 'system') {
+      foreach ([
+        'activity_log_view_enabled',
+        'activity_log_update_enabled',
+        'activity_log_delete_enabled',
+        'activity_log_restore_enabled',
       ] as $field) {
         if ($this->has($field)) {
           $payload[$field] = $this->boolean($field);

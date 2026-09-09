@@ -14,4 +14,8 @@ export interface SystemSettingsPayload {
     module_used_cars_enabled: boolean;
     module_cars_enabled: boolean;
     module_dictionaries_enabled: boolean;
+    activity_log_view_enabled: boolean;
+    activity_log_update_enabled: boolean;
+    activity_log_delete_enabled: boolean;
+    activity_log_restore_enabled: boolean;
 }

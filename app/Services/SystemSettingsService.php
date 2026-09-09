@@ -27,6 +27,10 @@ class SystemSettingsService
           'module_used_cars_enabled' => true,
           'module_cars_enabled' => true,
           'module_dictionaries_enabled' => true,
+          'activity_log_view_enabled' => true,
+          'activity_log_update_enabled' => true,
+          'activity_log_delete_enabled' => true,
+          'activity_log_restore_enabled' => true,
         ],
       );
     });

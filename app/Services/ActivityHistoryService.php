@@ -20,6 +20,19 @@ use Spatie\Activitylog\Models\Activity;
 
 class ActivityHistoryService
 {
+  public function allows(string $event): bool
+  {
+    $settings = SystemSettingsService::current();
+
+    return match ($event) {
+      'viewed' => (bool) ($settings->activity_log_view_enabled ?? true),
+      'created', 'updated' => (bool) ($settings->activity_log_update_enabled ?? true),
+      'deleted' => (bool) ($settings->activity_log_delete_enabled ?? true),
+      'restored' => (bool) ($settings->activity_log_restore_enabled ?? true),
+      default => true,
+    };
+  }
+
   /**
    * @return list<array<string, mixed>>
    */
@@ -42,12 +55,58 @@ class ActivityHistoryService
 
   public function logViewed(Model $subject, ?Model $causer = null): void
   {
+    if (! $this->allows('viewed')) {
+      return;
+    }
+
     activity()
       ->performedOn($subject)
       ->causedBy($causer)
       ->event('viewed')
       ->withProperties([])
       ->log('Просмотр карточки');
+  }
+
+  public function logDeleted(Model $subject, ?Model $causer = null): void
+  {
+    if (! $this->allows('deleted')) {
+      return;
+    }
+
+    activity()
+      ->performedOn($subject)
+      ->causedBy($causer)
+      ->event('deleted')
+      ->withProperties([])
+      ->log('Удаление автомобиля');
+  }
+
+  public function logRestored(Model $subject, ?Model $causer = null): void
+  {
+    if (! $this->allows('restored')) {
+      return;
+    }
+
+    activity()
+      ->performedOn($subject)
+      ->causedBy($causer)
+      ->event('restored')
+      ->withProperties([])
+      ->log('Восстановление автомобиля');
+  }
+
+  public function logForceDeleted(Model $subject, ?Model $causer = null): void
+  {
+    if (! $this->allows('deleted')) {
+      return;
+    }
+
+    activity()
+      ->performedOn($subject)
+      ->causedBy($causer)
+      ->event('deleted')
+      ->withProperties([])
+      ->log('Окончательное удаление автомобиля');
   }
 
   /**
@@ -111,6 +170,7 @@ class ActivityHistoryService
       'created' => 'Создал',
       'updated' => 'Изменил',
       'deleted' => 'Удалил',
+      'restored' => 'Восстановил',
       'viewed' => 'Посмотрел',
       default => $event,
     };
@@ -122,6 +182,7 @@ class ActivityHistoryService
       str_contains($description, 'created') => 'created',
       str_contains($description, 'updated') => 'updated',
       str_contains($description, 'deleted') => 'deleted',
+      str_contains($description, 'restored') => 'restored',
       str_contains(mb_strtolower($description), 'просмотр') => 'viewed',
       default => 'updated',
     };

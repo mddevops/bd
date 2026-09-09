@@ -11,6 +11,15 @@ Route::middleware(['auth', 'permission:used_cars.view', 'module:used_cars'])->pr
         Route::post('/', [UsedCarController::class, 'store'])->name('store');
     });
 
+    Route::middleware('role_or_permission:administrator|used_cars.delete')->group(function () {
+        Route::post('/bulk/destroy', [UsedCarController::class, 'bulkDestroy'])->name('bulk.destroy');
+        Route::post('/bulk/restore', [UsedCarController::class, 'bulkRestore'])->name('bulk.restore');
+        Route::post('/bulk/force-destroy', [UsedCarController::class, 'bulkForceDestroy'])->name('bulk.force-destroy');
+        Route::post('/{usedCar}/restore', [UsedCarController::class, 'restore'])->whereNumber('usedCar')->name('restore');
+        Route::delete('/{usedCar}/force', [UsedCarController::class, 'forceDestroy'])->whereNumber('usedCar')->name('force-destroy');
+        Route::delete('/{usedCar}', [UsedCarController::class, 'destroy'])->name('destroy');
+    });
+
     Route::get('/{usedCar}/form-data', [UsedCarController::class, 'carFormData'])->name('form-data');
     Route::get('/{usedCar}/activities', [UsedCarController::class, 'activities'])->name('activities');
     Route::get('/{usedCar}', [UsedCarController::class, 'show'])->name('show');
@@ -20,8 +29,4 @@ Route::middleware(['auth', 'permission:used_cars.view', 'module:used_cars'])->pr
         Route::put('/{usedCar}', [UsedCarController::class, 'update'])->name('update');
         Route::patch('/{usedCar}', [UsedCarController::class, 'update']);
     });
-
-    Route::delete('/{usedCar}', [UsedCarController::class, 'destroy'])
-        ->middleware('permission:used_cars.delete')
-        ->name('destroy');
 });

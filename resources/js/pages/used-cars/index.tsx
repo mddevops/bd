@@ -19,6 +19,7 @@ import {
     CellText,
     CellVolumePower,
 } from '@/components/used-cars/used-car-table-cells';
+import { VehicleBulkTrashActions } from '@/components/vehicle-bulk-trash-actions';
 import { useDostup } from '@/hooks/use-dostup';
 import { useInertiaDataTable } from '@/hooks/use-inertia-data-table';
 import AppLayout from '@/layouts/app-layout';
@@ -82,6 +83,7 @@ interface UsedCarsFilters {
     arrival_date_from: string | null;
     arrival_date_to: string | null;
     is_registered: string | null;
+    trashed: string | null;
 }
 
 interface SelectedOption {
@@ -130,6 +132,7 @@ const filterKeys = [
     'arrival_date_from',
     'arrival_date_to',
     'is_registered',
+    'trashed',
 ];
 
 function asFilterString(value: number | string | null | undefined): string | null {
@@ -153,7 +156,9 @@ export default function UsedCarsIndex({
     formMode,
     editingCar,
 }: Props) {
-    const { estPravo } = useDostup();
+    const { estPravo, estRol } = useDostup();
+    const canManageTrash = estRol('administrator') || estPravo('used_cars.delete');
+    const trashedOnly = filters.trashed === 'only';
     const { setSearch, setLimit, setFilter, applyFilters, resetFilters } = useInertiaDataTable(
         state,
         filterKeys,
@@ -216,6 +221,18 @@ export default function UsedCarsIndex({
 
     const filterFields = useMemo<DataTableFilterField[]>(
         () => [
+            ...(canManageTrash
+                ? [
+                      {
+                          type: 'select' as const,
+                          key: 'trashed',
+                          label: 'Записи',
+                          value: filters.trashed,
+                          emptyLabel: 'Активные',
+                          options: [{ value: 'only', label: 'Удалённые' }],
+                      },
+                  ]
+                : []),
             {
                 type: 'catalog',
                 key: 'mark_id',
@@ -330,7 +347,7 @@ export default function UsedCarsIndex({
                 ],
             },
         ],
-        [dictionaries, filters, ptsTypes, selectedMark?.label, selectedModel?.label],
+        [dictionaries, filters, canManageTrash, ptsTypes, selectedMark?.label, selectedModel?.label],
     );
 
     const columns = useMemo<ColumnDef<UsedCarRow>[]>(
@@ -558,13 +575,31 @@ export default function UsedCarsIndex({
                     onResetFilters={resetFilters}
                     cellBorders
                     getRowStyle={getRowStyle}
+                    selectable={canManageTrash}
+                    bulkActions={
+                        canManageTrash
+                            ? ({ selectedIds, clearSelection }) => (
+                                  <VehicleBulkTrashActions
+                                      selectedIds={selectedIds}
+                                      clearSelection={clearSelection}
+                                      trashedOnly={trashedOnly}
+                                      destroyRoute={route('used-cars.bulk.destroy')}
+                                      restoreRoute={route('used-cars.bulk.restore')}
+                                      forceDestroyRoute={route('used-cars.bulk.force-destroy')}
+                                      only={['cars', 'state', 'filters', 'flash']}
+                                  />
+                              )
+                            : undefined
+                    }
                     onRowClick={
-                        estPravo('used_cars.view') || estPravo('used_cars.update')
+                        estPravo('used_cars.view') ||
+                        estPravo('used_cars.update') ||
+                        (canManageTrash && trashedOnly)
                             ? (row) => openCar(row.id)
                             : undefined
                     }
                     toolbar={
-                        estPravo('used_cars.create') ? (
+                        estPravo('used_cars.create') && !trashedOnly ? (
                             <Button size="sm" className="h-8" type="button" onClick={openCreate}>
                                 <Plus className="mr-1.5 size-3.5" />
                                 Добавить

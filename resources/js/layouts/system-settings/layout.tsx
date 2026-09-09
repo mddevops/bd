@@ -21,6 +21,11 @@ const sidebarNavItems: NavItem[] = [
         url: '/system-settings/modules',
         icon: null,
     },
+    {
+        title: 'Система',
+        url: '/system-settings/system',
+        icon: null,
+    },
 ];
 
 export default function SystemSettingsLayout({ children }: { children: React.ReactNode }) {
@@ -28,7 +33,7 @@ export default function SystemSettingsLayout({ children }: { children: React.Rea
 
     return (
         <div className="px-4 py-6">
-            <Heading title="Настройки системы" description="Брендинг, доступ и модули CRM для всех пользователей" />
+            <Heading title="Настройки системы" description="Брендинг, доступ, модули и системные параметры CRM" />
 
             <div className="flex flex-col space-y-8 lg:flex-row lg:space-y-0 lg:space-x-12">
                 <aside className="w-full max-w-xl lg:w-48">

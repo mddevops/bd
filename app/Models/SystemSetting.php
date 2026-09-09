@@ -22,6 +22,10 @@ class SystemSetting extends Model
     'module_used_cars_enabled',
     'module_cars_enabled',
     'module_dictionaries_enabled',
+    'activity_log_view_enabled',
+    'activity_log_update_enabled',
+    'activity_log_delete_enabled',
+    'activity_log_restore_enabled',
   ];
 
   protected function casts(): array
@@ -37,6 +41,10 @@ class SystemSetting extends Model
       'module_used_cars_enabled' => 'boolean',
       'module_cars_enabled' => 'boolean',
       'module_dictionaries_enabled' => 'boolean',
+      'activity_log_view_enabled' => 'boolean',
+      'activity_log_update_enabled' => 'boolean',
+      'activity_log_delete_enabled' => 'boolean',
+      'activity_log_restore_enabled' => 'boolean',
     ];
   }
 }

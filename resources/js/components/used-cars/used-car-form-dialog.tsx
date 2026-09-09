@@ -1,5 +1,5 @@
 import { type FormDataConvertible } from '@inertiajs/core';
-import { useForm } from '@inertiajs/react';
+import { router, useForm } from '@inertiajs/react';
 import { type FormEvent, useMemo } from 'react';
 
 import { todayIsoDate } from '@/components/date-picker-field';
@@ -23,6 +23,9 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useConfirmAction } from '@/hooks/use-confirm-action';
+import { useDostup } from '@/hooks/use-dostup';
+import { safeRoute } from '@/lib/safe-route';
 
 interface OptionItem {
     value: number;
@@ -66,6 +69,7 @@ export interface UsedCarEditPayload {
     autoteka_url: string | null;
     sale_type: string | null;
     comment: string | null;
+    is_trashed?: boolean;
     services: UsedCarServiceRow[];
     selected: {
         mark: { id: number; label: string } | null;
@@ -203,6 +207,10 @@ function UsedCarFormDialogBody({
     onClose,
 }: FormBodyProps) {
     const isView = mode === 'view';
+    const { estPravo, estRol } = useDostup();
+    const { confirmAction, ConfirmActionModal } = useConfirmAction();
+    const canManageTrash = estRol('administrator') || estPravo('used_cars.delete');
+    const isTrashed = Boolean(car?.is_trashed);
     const initialData =
         (mode === 'edit' || mode === 'view') && car ? toFormData(car) : emptyFormData(emptyServices);
 
@@ -216,10 +224,13 @@ function UsedCarFormDialogBody({
         [form.data],
     );
 
+    const carTitle =
+        [car?.selected.mark?.label, car?.selected.model?.label, car?.year].filter(Boolean).join(' ') || 'автомобиль';
+
     const submit = (event: FormEvent) => {
         event.preventDefault();
 
-        if (isView) {
+        if (isView || isTrashed) {
             return;
         }
 
@@ -238,6 +249,55 @@ function UsedCarFormDialogBody({
         });
     };
 
+    const handleDelete = async () => {
+        if (!car) {
+            return;
+        }
+
+        const confirmed = await confirmAction({
+            title: 'Переместить в удалённые?',
+            description: `«${carTitle}» будет перемещён в удалённые. Запись можно будет восстановить.`,
+            confirmLabel: 'Удалить',
+            cancelLabel: 'Отмена',
+            variant: 'destructive',
+        });
+
+        if (!confirmed) {
+            return;
+        }
+
+        router.delete(route('used-cars.destroy', car.id), {
+            preserveScroll: true,
+            onSuccess: onClose,
+        });
+    };
+
+    const handleRestore = async () => {
+        if (!car) {
+            return;
+        }
+
+        const confirmed = await confirmAction({
+            title: 'Восстановить автомобиль?',
+            description: `«${carTitle}» снова появится в списке активных записей.`,
+            confirmLabel: 'Восстановить',
+            cancelLabel: 'Отмена',
+        });
+
+        if (!confirmed) {
+            return;
+        }
+
+        router.post(
+            route('used-cars.restore', car.id),
+            {},
+            {
+                preserveScroll: true,
+                onSuccess: onClose,
+            },
+        );
+    };
+
     return (
         <form onSubmit={submit} className="space-y-4">
             <OverlayPortalContainer>
@@ -252,7 +312,7 @@ function UsedCarFormDialogBody({
                             serviceStatuses={serviceStatuses}
                             ptsTypes={ptsTypes}
                             selected={mode === 'create' ? undefined : car?.selected}
-                            readOnly={isView}
+                            readOnly={isView || isTrashed}
                         />
                     </div>
                 </ScrollArea>
@@ -261,7 +321,31 @@ function UsedCarFormDialogBody({
             <DialogFooter className="sm:justify-between">
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                     {mode !== 'create' && car ? (
-                        <EntityActivityHistoryButton url={route('used-cars.activities', car.id)} />
+                        <>
+                            <EntityActivityHistoryButton url={safeRoute('used-cars.activities', car.id)} />
+                            {canManageTrash && !isTrashed ? (
+                                <Button
+                                    type="button"
+                                    variant="destructive"
+                                    size="sm"
+                                    disabled={form.processing}
+                                    onClick={handleDelete}
+                                >
+                                    Удалить
+                                </Button>
+                            ) : null}
+                            {canManageTrash && isTrashed ? (
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    disabled={form.processing}
+                                    onClick={handleRestore}
+                                >
+                                    Восстановить
+                                </Button>
+                            ) : null}
+                        </>
                     ) : (
                         <span />
                     )}
@@ -270,16 +354,18 @@ function UsedCarFormDialogBody({
                 <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
                     <DialogClose asChild>
                         <Button type="button" variant="outline" disabled={form.processing}>
-                            {isView ? 'Закрыть' : 'Отмена'}
+                            {isView || isTrashed ? 'Закрыть' : 'Отмена'}
                         </Button>
                     </DialogClose>
-                    {!isView ? (
+                    {!isView && !isTrashed ? (
                         <Button type="submit" disabled={form.processing}>
                             {mode === 'edit' ? 'Сохранить' : 'Добавить'}
                         </Button>
                     ) : null}
                 </div>
             </DialogFooter>
+
+            <ConfirmActionModal />
         </form>
     );
 }

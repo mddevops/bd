@@ -1,4 +1,4 @@
-import { router, useForm } from '@inertiajs/react';
+import { useForm, router } from '@inertiajs/react';
 import { type FormEvent, useMemo } from 'react';
 
 import {
@@ -23,6 +23,7 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useConfirmAction } from '@/hooks/use-confirm-action';
 import { useDostup } from '@/hooks/use-dostup';
+import { safeRoute } from '@/lib/safe-route';
 
 interface OptionItem {
     value: number;
@@ -62,6 +63,7 @@ export interface CarEditPayload {
     autoteka_url: string | null;
     link: string | null;
     comment: string | null;
+    is_trashed?: boolean;
     selected: {
         mark: { id: number; label: string } | null;
         model: { id: number; label: string } | null;
@@ -172,15 +174,15 @@ interface FormBodyProps {
 
 function CarFormDialogBody({ formKey, mode, car, dictionaries, ptsTypes, onClose }: FormBodyProps) {
     const isView = mode === 'view';
-    const { estPravo } = useDostup();
+    const { estPravo, estRol } = useDostup();
     const { confirmAction, ConfirmActionModal } = useConfirmAction();
+    const canManageTrash = estRol('administrator') || estPravo('cars.delete');
+    const isTrashed = Boolean(car?.is_trashed);
     const initialData = (mode === 'edit' || mode === 'view') && car ? toFormData(car) : emptyFormData();
 
     const form = useForm({ ...initialData });
 
     const normalizedData = useMemo(() => normalizeCarFormData(form.data), [form.data]);
-
-    const canDelete = mode === 'edit' && car !== null && estPravo('cars.delete');
 
     const carTitle =
         [car?.selected.mark?.label, car?.selected.model?.label, car?.year].filter(Boolean).join(' ') || 'автомобиль';
@@ -188,7 +190,7 @@ function CarFormDialogBody({ formKey, mode, car, dictionaries, ptsTypes, onClose
     const submit = (event: FormEvent) => {
         event.preventDefault();
 
-        if (isView) {
+        if (isView || isTrashed) {
             return;
         }
 
@@ -213,8 +215,8 @@ function CarFormDialogBody({ formKey, mode, car, dictionaries, ptsTypes, onClose
         }
 
         const confirmed = await confirmAction({
-            title: `Удалить «${carTitle}»?`,
-            description: 'Автомобиль будет удалён из списка новых авто. Это действие нельзя отменить.',
+            title: 'Переместить в удалённые?',
+            description: `«${carTitle}» будет перемещён в удалённые. Запись можно будет восстановить.`,
             confirmLabel: 'Удалить',
             cancelLabel: 'Отмена',
             variant: 'destructive',
@@ -230,6 +232,32 @@ function CarFormDialogBody({ formKey, mode, car, dictionaries, ptsTypes, onClose
         });
     };
 
+    const handleRestore = async () => {
+        if (!car) {
+            return;
+        }
+
+        const confirmed = await confirmAction({
+            title: 'Восстановить автомобиль?',
+            description: `«${carTitle}» снова появится в списке активных записей.`,
+            confirmLabel: 'Восстановить',
+            cancelLabel: 'Отмена',
+        });
+
+        if (!confirmed) {
+            return;
+        }
+
+        router.post(
+            route('cars.restore', car.id),
+            {},
+            {
+                preserveScroll: true,
+                onSuccess: onClose,
+            },
+        );
+    };
+
     return (
         <form onSubmit={submit} className="space-y-4">
             <OverlayPortalContainer>
@@ -243,7 +271,7 @@ function CarFormDialogBody({ formKey, mode, car, dictionaries, ptsTypes, onClose
                             dictionaries={dictionaries}
                             ptsTypes={ptsTypes}
                             selected={mode === 'create' ? undefined : car?.selected}
-                            readOnly={isView}
+                            readOnly={isView || isTrashed}
                         />
                     </div>
                 </ScrollArea>
@@ -252,27 +280,41 @@ function CarFormDialogBody({ formKey, mode, car, dictionaries, ptsTypes, onClose
             <DialogFooter className="sm:justify-between">
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                     {mode !== 'create' && car ? (
-                        <EntityActivityHistoryButton url={route('cars.activities', car.id)} />
-                    ) : null}
-                    {canDelete ? (
-                        <Button
-                            type="button"
-                            variant="destructive"
-                            disabled={form.processing}
-                            onClick={handleDelete}
-                        >
-                            Удалить
-                        </Button>
+                        <>
+                            <EntityActivityHistoryButton url={safeRoute('cars.activities', car.id)} />
+                            {canManageTrash && !isTrashed ? (
+                                <Button
+                                    type="button"
+                                    variant="destructive"
+                                    size="sm"
+                                    disabled={form.processing}
+                                    onClick={handleDelete}
+                                >
+                                    Удалить
+                                </Button>
+                            ) : null}
+                            {canManageTrash && isTrashed ? (
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    disabled={form.processing}
+                                    onClick={handleRestore}
+                                >
+                                    Восстановить
+                                </Button>
+                            ) : null}
+                        </>
                     ) : null}
                 </div>
 
                 <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
                     <DialogClose asChild>
                         <Button type="button" variant="outline" disabled={form.processing}>
-                            {isView ? 'Закрыть' : 'Отмена'}
+                            {isView || isTrashed ? 'Закрыть' : 'Отмена'}
                         </Button>
                     </DialogClose>
-                    {!isView ? (
+                    {!isView && !isTrashed ? (
                         <Button type="submit" disabled={form.processing}>
                             Сохранить
                         </Button>

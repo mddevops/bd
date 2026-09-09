@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\UsedCarServiceStatus;
 use App\Enums\UsedCarServiceType;
+use App\Http\Requests\UsedCars\BulkUsedCarIdsRequest;
 use App\Http\Requests\UsedCars\StoreUsedCarRequest;
 use App\Http\Requests\UsedCars\UpdateUsedCarRequest;
 use App\Models\Dictionaries\BodyType;
@@ -75,21 +76,28 @@ class UsedCarController extends Controller
     return $this->openForm($request, $usedCar, $mode);
   }
 
-  public function carFormData(Request $request, UsedCar $usedCar): JsonResponse
+  public function carFormData(Request $request, int $usedCar): JsonResponse
   {
-    $usedCar->load(['services', 'mark:id,name', 'model:id,name']);
-    $this->activityHistory->logViewed($usedCar, $request->user());
+    $model = $this->findUsedCarForForm($request, $usedCar);
+    $model->load(['services', 'mark:id,name', 'model:id,name']);
+    $this->activityHistory->logViewed($model, $request->user());
+
+    $mode = $model->trashed()
+      ? 'view'
+      : ($request->user()?->can('used_cars.update') ? 'edit' : 'view');
 
     return response()->json([
-      'mode' => $request->user()?->can('used_cars.update') ? 'edit' : 'view',
-      'car' => $this->serializeCar($usedCar),
+      'mode' => $mode,
+      'car' => $this->serializeCar($model),
     ]);
   }
 
-  public function activities(UsedCar $usedCar): JsonResponse
+  public function activities(Request $request, int $usedCar): JsonResponse
   {
+    $model = $this->findUsedCarForForm($request, $usedCar);
+
     return response()->json([
-      'activities' => $this->activityHistory->forSubject($usedCar),
+      'activities' => $this->activityHistory->forSubject($model),
     ]);
   }
 
@@ -110,11 +118,76 @@ class UsedCarController extends Controller
 
   public function destroy(UsedCar $usedCar): RedirectResponse
   {
+    $this->activityHistory->logDeleted($usedCar, request()->user());
     $usedCar->delete();
 
     return redirect()
       ->route('used-cars.index')
-      ->with('status', 'Автомобиль удалён');
+      ->with('status', 'Автомобиль перемещён в удалённые');
+  }
+
+  public function restore(int $usedCar): RedirectResponse
+  {
+    $model = UsedCar::withTrashed()->findOrFail($usedCar);
+    $model->restore();
+    $this->activityHistory->logRestored($model, request()->user());
+
+    return redirect()
+      ->route('used-cars.index')
+      ->with('status', 'Автомобиль восстановлен');
+  }
+
+  public function forceDestroy(int $usedCar): RedirectResponse
+  {
+    $model = UsedCar::withTrashed()->findOrFail($usedCar);
+    $this->activityHistory->logForceDeleted($model, request()->user());
+    $model->forceDelete();
+
+    return redirect()
+      ->route('used-cars.index')
+      ->with('status', 'Автомобиль удалён навсегда');
+  }
+
+  public function bulkDestroy(BulkUsedCarIdsRequest $request): RedirectResponse
+  {
+    $cars = UsedCar::query()->whereIn('id', $request->ids())->get();
+
+    foreach ($cars as $car) {
+      $this->activityHistory->logDeleted($car, $request->user());
+      $car->delete();
+    }
+
+    return redirect()
+      ->back()
+      ->with('status', 'Выбранные автомобили перемещены в удалённые');
+  }
+
+  public function bulkRestore(BulkUsedCarIdsRequest $request): RedirectResponse
+  {
+    $cars = UsedCar::onlyTrashed()->whereIn('id', $request->ids())->get();
+
+    foreach ($cars as $car) {
+      $car->restore();
+      $this->activityHistory->logRestored($car, $request->user());
+    }
+
+    return redirect()
+      ->back()
+      ->with('status', 'Выбранные автомобили восстановлены');
+  }
+
+  public function bulkForceDestroy(BulkUsedCarIdsRequest $request): RedirectResponse
+  {
+    $cars = UsedCar::onlyTrashed()->whereIn('id', $request->ids())->get();
+
+    foreach ($cars as $car) {
+      $this->activityHistory->logForceDeleted($car, $request->user());
+      $car->forceDelete();
+    }
+
+    return redirect()
+      ->back()
+      ->with('status', 'Выбранные автомобили удалены навсегда');
   }
 
   /**
@@ -132,6 +205,25 @@ class UsedCarController extends Controller
     ]);
   }
 
+  private function findUsedCarForForm(Request $request, int $id): UsedCar
+  {
+    $query = UsedCar::query();
+
+    if ($this->canManageTrash($request)) {
+      $query->withTrashed();
+    }
+
+    return $query->findOrFail($id);
+  }
+
+  private function canManageTrash(Request $request): bool
+  {
+    $user = $request->user();
+
+    return $user !== null
+      && ($user->hasRole('administrator') || $user->can('used_cars.delete'));
+  }
+
   /**
    * @return array<string, mixed>
    */
@@ -141,6 +233,10 @@ class UsedCarController extends Controller
 
     $cars = DataTable::query(
       UsedCar::query()
+        ->when(
+          $filters['state']['trashed'] === 'only',
+          fn (Builder $query) => $query->onlyTrashed(),
+        )
         ->with([
           'mark:id,name',
           'model:id,name',
@@ -313,6 +409,9 @@ class UsedCarController extends Controller
       $expressions[] = "arrival_date_to:{$state['arrival_date_to']}";
     }
 
+    $trashed = $request->string('trashed')->toString();
+    $state['trashed'] = $this->canManageTrash($request) && $trashed === 'only' ? 'only' : null;
+
     return [
       'expressions' => $expressions,
       'state' => $state,
@@ -419,6 +518,7 @@ class UsedCarController extends Controller
       'services' => $services,
       'purchase_price_with_expenses' => $car->purchasePriceWithExpenses(),
       'total_expenses' => $car->totalExpenses(),
+      'is_trashed' => $car->trashed(),
       'selected' => [
         'mark' => $car->mark ? ['id' => $car->mark->id, 'label' => $car->mark->name] : null,
         'model' => $car->model ? ['id' => $car->model->id, 'label' => $car->model->name] : null,

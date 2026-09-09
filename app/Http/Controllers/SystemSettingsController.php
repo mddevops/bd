@@ -41,6 +41,13 @@ class SystemSettingsController extends Controller
     ]);
   }
 
+  public function system(): Response
+  {
+    return Inertia::render('system-settings/system', [
+      'settings' => $this->settingsPayload(),
+    ]);
+  }
+
   public function update(UpdateSystemSettingsRequest $request): RedirectResponse
   {
     $settings = SystemSettingsService::current();
@@ -100,6 +107,15 @@ class SystemSettingsController extends Controller
       ]);
     }
 
+    if ($section === 'system') {
+      $settings->update([
+        'activity_log_view_enabled' => $validated['activity_log_view_enabled'],
+        'activity_log_update_enabled' => $validated['activity_log_update_enabled'],
+        'activity_log_delete_enabled' => $validated['activity_log_delete_enabled'],
+        'activity_log_restore_enabled' => $validated['activity_log_restore_enabled'],
+      ]);
+    }
+
     SystemSettingsService::forgetCache();
 
     return back()->with('status', 'Настройки системы сохранены');
@@ -126,6 +142,10 @@ class SystemSettingsController extends Controller
       'module_used_cars_enabled' => $settings->module_used_cars_enabled ?? true,
       'module_cars_enabled' => $settings->module_cars_enabled ?? true,
       'module_dictionaries_enabled' => $settings->module_dictionaries_enabled ?? true,
+      'activity_log_view_enabled' => $settings->activity_log_view_enabled ?? true,
+      'activity_log_update_enabled' => $settings->activity_log_update_enabled ?? true,
+      'activity_log_delete_enabled' => $settings->activity_log_delete_enabled ?? true,
+      'activity_log_restore_enabled' => $settings->activity_log_restore_enabled ?? true,
     ];
   }
 }
