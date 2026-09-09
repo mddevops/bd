@@ -1,7 +1,6 @@
 import { History } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -50,17 +49,42 @@ interface Props {
     className?: string;
 }
 
-function eventBadgeVariant(event: string): 'default' | 'secondary' | 'outline' | 'destructive' {
-    switch (event) {
-        case 'created':
-            return 'default';
-        case 'deleted':
-            return 'destructive';
-        case 'viewed':
-            return 'outline';
-        default:
-            return 'secondary';
-    }
+const eventStatusStyles: Record<string, { wrap: string; dot: string }> = {
+    viewed: {
+        wrap: 'bg-emerald-500/10 text-foreground',
+        dot: 'bg-emerald-500',
+    },
+    updated: {
+        wrap: 'bg-orange-500/10 text-foreground',
+        dot: 'bg-orange-500',
+    },
+    deleted: {
+        wrap: 'bg-red-500/10 text-foreground',
+        dot: 'bg-red-500',
+    },
+    created: {
+        wrap: 'bg-sky-500/10 text-foreground',
+        dot: 'bg-sky-500',
+    },
+};
+
+function EventStatusBadge({ event, label }: { event: string; label: string }) {
+    const styles = eventStatusStyles[event] ?? {
+        wrap: 'bg-muted text-foreground',
+        dot: 'bg-muted-foreground',
+    };
+
+    return (
+        <span
+            className={cn(
+                'inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-medium',
+                styles.wrap,
+            )}
+        >
+            <span aria-hidden="true" className={cn('size-1.5 rounded-full', styles.dot)} />
+            {label}
+        </span>
+    );
 }
 
 function CellValue({ value }: { value: string | null }) {
@@ -194,29 +218,28 @@ export function EntityActivityHistoryButton({ url, className }: Props) {
                                         <TimelineConnector />
                                         <TimelineContent>
                                             <TimelineHeader>
-                                                <TimelineTime
-                                                    dateTime={item.created_at_iso ?? undefined}
-                                                    className="tabular-nums"
-                                                >
-                                                    {item.created_at ?? '—'}
-                                                </TimelineTime>
+                                                <div className="flex flex-wrap items-center gap-2">
+                                                    <EventStatusBadge
+                                                        event={item.event}
+                                                        label={item.event_label}
+                                                    />
+                                                    <TimelineTime
+                                                        dateTime={item.created_at_iso ?? undefined}
+                                                        className="tabular-nums"
+                                                    >
+                                                        {item.created_at ?? '—'}
+                                                    </TimelineTime>
+                                                </div>
                                                 <TimelineTitle className="text-sm">
                                                     {item.causer?.name ?? 'Система'}
                                                 </TimelineTitle>
                                             </TimelineHeader>
 
-                                            <div className="mt-2 space-y-2">
-                                                <Badge
-                                                    variant={eventBadgeVariant(item.event)}
-                                                    className="h-5 px-1.5 text-[10px]"
-                                                >
-                                                    {item.event_label}
-                                                </Badge>
-
-                                                {item.changes.length > 0 ? (
+                                            {item.changes.length > 0 ? (
+                                                <div className="mt-2">
                                                     <ChangesTable changes={item.changes} />
-                                                ) : null}
-                                            </div>
+                                                </div>
+                                            ) : null}
                                         </TimelineContent>
                                     </TimelineItem>
                                 ))}
