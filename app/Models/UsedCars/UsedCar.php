@@ -16,9 +16,12 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class UsedCar extends Model
 {
+  use LogsActivity;
   use SoftDeletes;
 
   protected $fillable = [
@@ -136,6 +139,16 @@ class UsedCar extends Model
   public function services(): HasMany
   {
     return $this->hasMany(UsedCarService::class);
+  }
+
+  public function getActivitylogOptions(): LogOptions
+  {
+    return LogOptions::defaults()
+      ->useLogName('used-cars')
+      ->logFillable()
+      ->logExcept(['pictures'])
+      ->logOnlyDirty()
+      ->dontSubmitEmptyLogs();
   }
 
   public function servicesTotalCost(): int

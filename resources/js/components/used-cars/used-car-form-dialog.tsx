@@ -3,6 +3,7 @@ import { useForm } from '@inertiajs/react';
 import { type FormEvent, useMemo } from 'react';
 
 import { todayIsoDate } from '@/components/date-picker-field';
+import { EntityActivityHistoryButton } from '@/components/entity-activity-history';
 import { OverlayPortalContainer } from '@/components/overlay-portal-container';
 import {
     UsedCarFormFields,
@@ -257,17 +258,27 @@ function UsedCarFormDialogBody({
                 </ScrollArea>
             </OverlayPortalContainer>
 
-            <DialogFooter>
-                <DialogClose asChild>
-                    <Button type="button" variant="outline" disabled={form.processing}>
-                        {isView ? 'Закрыть' : 'Отмена'}
-                    </Button>
-                </DialogClose>
-                {!isView ? (
-                    <Button type="submit" disabled={form.processing}>
-                        {mode === 'edit' ? 'Сохранить' : 'Добавить'}
-                    </Button>
-                ) : null}
+            <DialogFooter className="sm:justify-between">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                    {mode !== 'create' && car ? (
+                        <EntityActivityHistoryButton url={route('used-cars.activities', car.id)} />
+                    ) : (
+                        <span />
+                    )}
+                </div>
+
+                <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+                    <DialogClose asChild>
+                        <Button type="button" variant="outline" disabled={form.processing}>
+                            {isView ? 'Закрыть' : 'Отмена'}
+                        </Button>
+                    </DialogClose>
+                    {!isView ? (
+                        <Button type="submit" disabled={form.processing}>
+                            {mode === 'edit' ? 'Сохранить' : 'Добавить'}
+                        </Button>
+                    ) : null}
+                </div>
             </DialogFooter>
         </form>
     );

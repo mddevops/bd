@@ -12,6 +12,7 @@ Route::middleware(['auth', 'permission:used_cars.view', 'module:used_cars'])->pr
     });
 
     Route::get('/{usedCar}/form-data', [UsedCarController::class, 'carFormData'])->name('form-data');
+    Route::get('/{usedCar}/activities', [UsedCarController::class, 'activities'])->name('activities');
     Route::get('/{usedCar}', [UsedCarController::class, 'show'])->name('show');
 
     Route::middleware('permission:used_cars.update')->group(function () {

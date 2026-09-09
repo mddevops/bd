@@ -8,6 +8,7 @@ import {
     type CarFormData,
 } from '@/components/cars/car-form';
 import { todayIsoDate } from '@/components/date-picker-field';
+import { EntityActivityHistoryButton } from '@/components/entity-activity-history';
 import { OverlayPortalContainer } from '@/components/overlay-portal-container';
 import { Button } from '@/components/ui/button';
 import {
@@ -249,18 +250,21 @@ function CarFormDialogBody({ formKey, mode, car, dictionaries, ptsTypes, onClose
             </OverlayPortalContainer>
 
             <DialogFooter className="sm:justify-between">
-                {canDelete ? (
-                    <Button
-                        type="button"
-                        variant="destructive"
-                        disabled={form.processing}
-                        onClick={handleDelete}
-                    >
-                        Удалить
-                    </Button>
-                ) : (
-                    <span />
-                )}
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                    {mode !== 'create' && car ? (
+                        <EntityActivityHistoryButton url={route('cars.activities', car.id)} />
+                    ) : null}
+                    {canDelete ? (
+                        <Button
+                            type="button"
+                            variant="destructive"
+                            disabled={form.processing}
+                            onClick={handleDelete}
+                        >
+                            Удалить
+                        </Button>
+                    ) : null}
+                </div>
 
                 <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
                     <DialogClose asChild>

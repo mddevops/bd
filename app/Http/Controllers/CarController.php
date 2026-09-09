@@ -13,6 +13,7 @@ use App\Models\Dictionaries\InteriorType;
 use App\Models\Dictionaries\Showroom;
 use App\Models\Dictionaries\Transmission;
 use App\Models\Dictionaries\WheelType;
+use App\Services\ActivityHistoryService;
 use App\Services\Catalog\CatalogSelectService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -27,6 +28,7 @@ class CarController extends Controller
 {
   public function __construct(
     private readonly CatalogSelectService $selects,
+    private readonly ActivityHistoryService $activityHistory,
   ) {}
 
   public function index(Request $request): Response
@@ -69,10 +71,18 @@ class CarController extends Controller
   public function carFormData(Request $request, Car $car): JsonResponse
   {
     $car->load(['mark:id,name', 'model:id,name']);
+    $this->activityHistory->logViewed($car, $request->user());
 
     return response()->json([
       'mode' => $request->user()?->can('cars.update') ? 'edit' : 'view',
       'car' => $this->serializeCar($car),
+    ]);
+  }
+
+  public function activities(Car $car): JsonResponse
+  {
+    return response()->json([
+      'activities' => $this->activityHistory->forSubject($car),
     ]);
   }
 
@@ -101,6 +111,7 @@ class CarController extends Controller
   private function openForm(Request $request, Car $car, string $formMode): Response
   {
     $car->load(['mark:id,name', 'model:id,name']);
+    $this->activityHistory->logViewed($car, $request->user());
 
     return Inertia::render('cars/index', [
       ...$this->indexProps($request),

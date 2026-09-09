@@ -12,6 +12,7 @@ Route::middleware(['auth', 'permission:cars.view', 'module:cars'])->prefix('cars
     });
 
     Route::get('/{car}/form-data', [CarController::class, 'carFormData'])->name('form-data');
+    Route::get('/{car}/activities', [CarController::class, 'activities'])->name('activities');
     Route::get('/{car}', [CarController::class, 'show'])->name('show');
 
     Route::middleware('permission:cars.update')->group(function () {

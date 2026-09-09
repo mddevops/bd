@@ -15,6 +15,7 @@ use App\Models\Dictionaries\Transmission;
 use App\Models\Dictionaries\UsedCarStatus;
 use App\Models\Dictionaries\WheelType;
 use App\Models\UsedCars\UsedCar;
+use App\Services\ActivityHistoryService;
 use App\Services\Catalog\CatalogSelectService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -30,6 +31,7 @@ class UsedCarController extends Controller
 {
   public function __construct(
     private readonly CatalogSelectService $selects,
+    private readonly ActivityHistoryService $activityHistory,
   ) {}
 
   public function index(Request $request): Response
@@ -76,10 +78,18 @@ class UsedCarController extends Controller
   public function carFormData(Request $request, UsedCar $usedCar): JsonResponse
   {
     $usedCar->load(['services', 'mark:id,name', 'model:id,name']);
+    $this->activityHistory->logViewed($usedCar, $request->user());
 
     return response()->json([
       'mode' => $request->user()?->can('used_cars.update') ? 'edit' : 'view',
       'car' => $this->serializeCar($usedCar),
+    ]);
+  }
+
+  public function activities(UsedCar $usedCar): JsonResponse
+  {
+    return response()->json([
+      'activities' => $this->activityHistory->forSubject($usedCar),
     ]);
   }
 
@@ -113,6 +123,7 @@ class UsedCarController extends Controller
   private function openForm(Request $request, UsedCar $usedCar, string $formMode): Response
   {
     $usedCar->load(['services', 'mark:id,name', 'model:id,name']);
+    $this->activityHistory->logViewed($usedCar, $request->user());
 
     return Inertia::render('used-cars/index', [
       ...$this->indexProps($request),

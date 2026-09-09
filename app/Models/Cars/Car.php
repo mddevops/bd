@@ -15,9 +15,12 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class Car extends Model
 {
+  use LogsActivity;
   use SoftDeletes;
 
   protected $fillable = [
@@ -125,6 +128,15 @@ class Car extends Model
   public function manager(): BelongsTo
   {
     return $this->belongsTo(User::class, 'manager_id');
+  }
+
+  public function getActivitylogOptions(): LogOptions
+  {
+    return LogOptions::defaults()
+      ->useLogName('cars')
+      ->logFillable()
+      ->logOnlyDirty()
+      ->dontSubmitEmptyLogs();
   }
 
   public function totalExpenses(): int
